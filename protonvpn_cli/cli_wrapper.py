@@ -9,22 +9,26 @@ from textwrap import dedent
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
-
 from protonvpn_nm_lib import exceptions
-from protonvpn_nm_lib.constants import (FLAT_SUPPORTED_PROTOCOLS, SUPPORTED_FEATURES,
-                         VIRTUAL_DEVICE_NAME)
-from protonvpn_nm_lib.enums import (ConnectionMetadataEnum, ProtocolEnum, UserSettingEnum,
-                     UserSettingStatusEnum, KillswitchStatusEnum)
+from protonvpn_nm_lib.constants import (FLAT_SUPPORTED_PROTOCOLS,
+                                        SUPPORTED_FEATURES,
+                                        VIRTUAL_DEVICE_NAME)
+from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
+                                    KillswitchStatusEnum, ProtocolEnum,
+                                    UserSettingEnum, UserSettingStatusEnum)
 from protonvpn_nm_lib.logger import logger
 from protonvpn_nm_lib.services import capture_exception
 from protonvpn_nm_lib.services.certificate_manager import CertificateManager
 from protonvpn_nm_lib.services.connection_manager import ConnectionManager
 from protonvpn_nm_lib.services.dbus_get_wrapper import DbusGetWrapper
-from protonvpn_nm_lib.services.server_manager import ServerManager
-from protonvpn_nm_lib.services.user_configuration_manager import UserConfigurationManager
-from protonvpn_nm_lib.services.user_manager import UserManager
+from protonvpn_nm_lib.services.ipv6_leak_protection_manager import \
+    IPv6LeakProtectionManager
 from protonvpn_nm_lib.services.killswitch_manager import KillSwitchManager
-from protonvpn_nm_lib.services.ipv6_leak_protection_manager import IPv6LeakProtectionManager
+from protonvpn_nm_lib.services.server_manager import ServerManager
+from protonvpn_nm_lib.services.user_configuration_manager import \
+    UserConfigurationManager
+from protonvpn_nm_lib.services.user_manager import UserManager
+
 from .cli_dialog import dialog  # noqa
 
 
@@ -141,12 +145,13 @@ class CLIWrapper():
         protonvpn_password = getpass.getpass("Enter your ProtonVPN password: ")
         self.login_user(exit_type, protonvpn_username, protonvpn_password)
 
-    def logout(self, _pass_check=None, _removed=None):
+    def logout(self, session=None, _pass_check=None, _removed=None):
         """Proxymethod to logout user."""
         exit_type = 1
 
         if _pass_check is None and _removed is None:
             print("Logging out...")
+            session = self.get_existing_session(exit_type)
             self.remove_existing_connection()
             _pass_check = []
             _removed = []
@@ -156,29 +161,35 @@ class CLIWrapper():
             self.user_manager.logout(_pass_check, _removed)
         except exceptions.StoredProtonUsernameNotFound:
             _pass_check.append(exceptions.StoredProtonUsernameNotFound)
-            self.logout(_pass_check, _removed)
+            self.logout(session, _pass_check, _removed)
         except exceptions.StoredUserDataNotFound:
             _pass_check.append(exceptions.StoredUserDataNotFound)
-            self.logout(_pass_check, _removed)
+            self.logout(session, _pass_check, _removed)
         except exceptions.StoredSessionNotFound:
             _pass_check.append(exceptions.StoredSessionNotFound)
-            self.logout(_pass_check, _removed)
+            self.logout(session, _pass_check, _removed)
         except exceptions.KeyringDataNotFound:
             print("[!] Unable to logout. No session was found.")
+            sys.exit(exit_type)
         except exceptions.AccessKeyringError:
             print("[!] Unable to logout. Could not access keyring.")
+            sys.exit(exit_type)
         except Exception as e:
             capture_exception(e)
             logger.exception(
                 "[!] Unknown error: {}".format(e)
             )
             print("[!] Unknown error occured: {}.".format(e))
-        else:
-            exit_type = 0
-            logger.info("Successful logout.")
-            print("Logout successful!")
-        finally:
             sys.exit(exit_type)
+
+        try:
+            session.logout()
+        except exceptions.ProtonSessionWrapperError:
+            pass
+
+        logger.info("Successful logout.")
+        print("Logout successful!")
+        sys.exit()
 
     def status(self):
         """Proxymethod to diplay connection status."""
@@ -311,7 +322,7 @@ class CLIWrapper():
                 if len(user_choice) == 1:
                     user_choice = proto_short[user_choice]
             except KeyError:
-                raise exceptions.ConfigurationsSelectedOptionError(
+                print(
                     "Selected option \"{}\" is incorrect. ".format(user_choice)
                     + "Please select from one of the possible protocols "
                     + "[ [t]cp | [u]dp | [i]kev2 | [w]reguard ]"
@@ -677,8 +688,7 @@ class CLIWrapper():
             self.login(force=True)
             self.session = self.get_existing_session(exit_type=1)
             self.get_cert_filename_and_domain(
-                cli_commands, self.session,
-                protocol, command
+                cli_commands, protocol, command
             )
 
     def determine_protocol(self, args):
