@@ -7,3 +7,5 @@ verify_ssl = true
 
 [packages]
 pythondialog = "*"
+dbus-python = "*"
+pyxdg = "*"

@@ -276,12 +276,15 @@ class CLIWrapper():
                 time.sleep(self.time_sleep_value)
                 continue
 
+            os.system("clear")
+
             try:
                 resp = _call_method()
             except exceptions.ConfigurationsSelectedOptionError as e:
                 print("\n[!] {}\n".format(e))
                 continue
             else:
+                os.system("clear")
                 if resp is not None and len(resp) > 0:
                     print("\n{}\n".format(resp))
 
