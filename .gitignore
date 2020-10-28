@@ -1,0 +1,11 @@
+build/
+dist/
+MANIFEST
+*.pyc
+*.egg-info/
+.vscode/
+*.lock
+*.json
+*cache*
+.env
+.coverage
