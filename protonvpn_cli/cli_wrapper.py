@@ -677,6 +677,9 @@ class CLIWrapper():
         except exceptions.CacheLogicalServersError as e:
             print("\n[!] CacheLogicalServersError: {}".format(e))
             sys.exit(1)
+        except exceptions.MissingCacheError as e:
+            print("\n[!] MissingCacheError: {}".format(e))
+            sys.exit(1)
         except exceptions.API403Error as e:
             print("\n[!] API403Error: {}".format(e.error))
             handle_error = 403
