@@ -1,0 +1,9 @@
+# Jobs to build debian packages
+include:
+  - project: 'ProtonVPN/Linux/_gitlab-ci'
+    ref: public-protonvpn-repo
+    file: 'gitlab-ci-build-publish-debian.yml'
+ 
+stages:
+  - build
+  - publish
