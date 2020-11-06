@@ -98,7 +98,8 @@ class CLIWrapper():
         loop = GLib.MainLoop()
         MonitorVPNState(
             VIRTUAL_DEVICE_NAME, loop, self.ks_manager,
-            self.user_conf_manager, self.connection_manager
+            self.user_conf_manager, self.connection_manager,
+            self.reconector_manager
         )
         loop.run()
         sys.exit(exit_type)
@@ -799,7 +800,7 @@ class MonitorVPNState(DbusGetWrapper):
     def __init__(
         self, virtual_device_name, loop,
         ks_manager, user_conf_manager,
-        connection_manager
+        connection_manager, reconector_manager
     ):
         self.max_attempts = 5
         self.delay = 5000
@@ -808,6 +809,7 @@ class MonitorVPNState(DbusGetWrapper):
         self.virtual_device_name = virtual_device_name
         self.user_conf_manager = user_conf_manager
         self.connection_manager = connection_manager
+        self.reconector_manager = reconector_manager
         self.ks_manager = ks_manager
         self.bus = dbus.SystemBus()
         self.vpn_check()
