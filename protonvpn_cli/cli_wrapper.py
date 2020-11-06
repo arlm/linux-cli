@@ -28,12 +28,14 @@ from protonvpn_nm_lib.services.server_manager import ServerManager
 from protonvpn_nm_lib.services.user_configuration_manager import \
     UserConfigurationManager
 from protonvpn_nm_lib.services.user_manager import UserManager
+from protonvpn_nm_lib.services.reconnector_manager import ReconnectorManager
 
 from .cli_dialog import dialog  # noqa
 
 
 class CLIWrapper():
     time_sleep_value = 1
+    reconector_manager = ReconnectorManager()
     user_conf_manager = UserConfigurationManager()
     ks_manager = KillSwitchManager(user_conf_manager)
     connection_manager = ConnectionManager()
@@ -784,7 +786,8 @@ class CLIWrapper():
             self.connection_manager.remove_connection(
                 self.user_conf_manager,
                 self.ks_manager,
-                self.ipv6_lp_manager
+                self.ipv6_lp_manager,
+                self.reconector_manager
             )
         except exceptions.ConnectionNotFound:
             pass
@@ -836,7 +839,7 @@ class MonitorVPNState(DbusGetWrapper):
             if self.user_conf_manager.killswitch == KillswitchStatusEnum.SOFT: # noqa
                 self.ks_manager.manage("soft_connection")
 
-            self.connection_manager.start_daemon_reconnector()
+            self.reconector_manager.start_daemon_reconnector()
 
             logger.info(msg)
             print("\n{}".format(msg))
@@ -855,7 +858,7 @@ class MonitorVPNState(DbusGetWrapper):
                     "Reason: {}".format(reason)
 
             logger.error(msg)
-            self.connection_manager.stop_daemon_reconnector()
+            self.reconector_manager.stop_daemon_reconnector()
             self.loop.quit()
 
     def vpn_signal_handler(self, conn):

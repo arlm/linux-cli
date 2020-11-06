@@ -1,3 +1,10 @@
+protonvpn-cli (0.0.1-2) unstable; urgency=low
+
+  * Implement new reconnection manager class
+  * Manage start and stop of protonvpn reconnector
+
+ -- Proton Technologies AG <opensource@proton.me>  Mon, 06 Oct 2020 17:05:12 +0000
+
 protonvpn-cli (0.0.1-1) unstable; urgency=low
 
   * Initial alpha release
