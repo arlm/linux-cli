@@ -95,7 +95,8 @@ class CLIWrapper():
         DBusGMainLoop(set_as_default=True)
         loop = GLib.MainLoop()
         MonitorVPNState(
-            VIRTUAL_DEVICE_NAME, loop, self.ks_manager, self.user_conf_manager
+            VIRTUAL_DEVICE_NAME, loop, self.ks_manager,
+            self.user_conf_manager, self.connection_manager
         )
         loop.run()
         sys.exit(exit_type)
@@ -794,7 +795,8 @@ class CLIWrapper():
 class MonitorVPNState(DbusGetWrapper):
     def __init__(
         self, virtual_device_name, loop,
-        ks_manager, user_conf_manager
+        ks_manager, user_conf_manager,
+        connection_manager
     ):
         self.max_attempts = 5
         self.delay = 5000
@@ -802,11 +804,12 @@ class MonitorVPNState(DbusGetWrapper):
         self.loop = loop
         self.virtual_device_name = virtual_device_name
         self.user_conf_manager = user_conf_manager
+        self.connection_manager = connection_manager
         self.ks_manager = ks_manager
         self.bus = dbus.SystemBus()
-        self.test()
+        self.vpn_check()
 
-    def test(self):
+    def vpn_check(self):
         vpn_interface = self.get_vpn_interface(True)
 
         if not isinstance(vpn_interface, tuple):
@@ -833,6 +836,8 @@ class MonitorVPNState(DbusGetWrapper):
             if self.user_conf_manager.killswitch == KillswitchStatusEnum.SOFT: # noqa
                 self.ks_manager.manage("soft_connection")
 
+            self.connection_manager.start_daemon_reconnector()
+
             logger.info(msg)
             print("\n{}".format(msg))
             self.loop.quit()
@@ -850,7 +855,7 @@ class MonitorVPNState(DbusGetWrapper):
                     "Reason: {}".format(reason)
 
             logger.error(msg)
-            print(msg)
+            self.connection_manager.stop_daemon_reconnector()
             self.loop.quit()
 
     def vpn_signal_handler(self, conn):
