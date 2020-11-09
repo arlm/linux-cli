@@ -72,7 +72,7 @@ class CLIWrapper():
         openvpn_username, openvpn_password = self.get_ovpn_credentials(
             exit_type
         )
-        logger.info("OpenVPN credentials were fetched.")
+        logger.info("OpenVPN credentials fetched")
 
         (certificate_filename, domain,
             entry_ip) = self.get_cert_filename_and_domain(
@@ -594,9 +594,10 @@ class CLIWrapper():
             "ProtonVPN connection was successfully added to Network Manager."
         )
 
-    def get_ovpn_credentials(self, exit_type, retry=True):
+    def get_ovpn_credentials(self, exit_type, has_retried=False):
         """Proxymethod to get user OVPN credentials."""
         openvpn_username, openvpn_password = None, None
+        logger.info("Getting openvpn credentials")
 
         try:
             openvpn_username, openvpn_password = self.user_manager.get_stored_vpn_credentials( # noqa
@@ -612,21 +613,33 @@ class CLIWrapper():
             exceptions.JSONDataError,
             exceptions.JSONDataNoneError
         ) as e:
-            if not retry:
-                print(
-                    "\n[!] Missing user data. Please, "
-                    "login first."
-                )
-                sys.exit(exit_type)
-            else:
+            if not has_retried:
                 logger.info(
                     "[!] JSONDataError/JSONDataNoneError: {}"
                     "\n--->User data was not previously cached. "
                     "Caching user data and re-attempt to "
                     "get ovpn credentials.".format(e)
                 )
-                self.user_manager.cache_user_data()
+                self.cache_user_data()
                 return self.get_ovpn_credentials(exit_type, False)
+            else:
+                print(
+                    "\n[!] Missing user data. Please, "
+                    "login first."
+                )
+                sys.exit(exit_type)
+        except exceptions.APITimeoutError as e:
+            logger.exception(
+                "[!] APITimeoutError: {}".format(e)
+            )
+            print("\n[!] Connection timeout, unable to reach API.")
+            sys.exit(1)
+        except exceptions.ProtonSessionWrapperError as e:
+            logger.exception(
+                "[!] Unknown ProtonSessionWrapperError: {}".format(e)
+            )
+            print("\n[!] Unknown API error occured: {}".format(e.error))
+            sys.exit(1)
         except Exception as e:
             capture_exception(e)
             logger.exception(
@@ -637,26 +650,41 @@ class CLIWrapper():
         else:
             return openvpn_username, openvpn_password
 
+    def cache_user_data(self):
+        """Cache user data."""
+        try:
+            self.user_manager.cache_user_data()
+        except exceptions.APITimeoutError as e:
+            logger.exception(
+                "[!] APITimeoutError (userdata): {}".format(e)
+                )
+            print("\n[!] Connection timeout, unable to reach API.")
+            sys.exit(1)
+
     def get_cert_filename_and_domain(
         self, cli_commands,
         protocol, command
     ):
         """Proxymethod to get certficate filename and server domain."""
-        try:
-            invoke_dialog = command[0] # noqa
-        except TypeError:
-            servername, protocol = dialog(
-                self.server_manager,
-                self.session,
-            )
-
-            return self.server_manager.direct(
-                self.session, protocol, servername
-            )
-
+        is_dialog = False
         handle_error = False
 
         try:
+            invoke_dialog = command[0] # noqa
+        except TypeError:
+            is_dialog = True
+
+        try:
+            if is_dialog:
+                servername, protocol = dialog(
+                    self.server_manager,
+                    self.session,
+                )
+
+                return self.server_manager.direct(
+                    self.session, protocol, servername
+                )
+
             return cli_commands[command[0]](
                 self.session, protocol, command
             )
@@ -688,8 +716,21 @@ class CLIWrapper():
         except exceptions.API403Error as e:
             print("\n[!] API403Error: {}".format(e.error))
             handle_error = 403
+        except exceptions.APITimeoutError as e:
+            logger.exception(
+                "[!] APITimeoutError: {}".format(e)
+            )
+            print("\n[!] Connection timeout, unable to reach API.")
+            sys.exit(1)
         except exceptions.ProtonSessionWrapperError as e:
-            print("\n[!] ProtonSessionWrapperError: {}".format(e.error))
+            print("\n[!] Unknown API error occured: {}".format(e.error))
+            sys.exit(1)
+        except Exception as e:
+            capture_exception(e)
+            logger.exception(
+                "[!] Unknown error: {}".format(e)
+            )
+            print("\n[!] Unknown error occured: {}.".format(e))
             sys.exit(1)
 
         if not handle_error:
@@ -770,6 +811,15 @@ class CLIWrapper():
             )
         except exceptions.APIAuthenticationError:
             print("[!] Unable to authenticate. Unexpected API response.")
+        except exceptions.APITimeoutError as e:
+            logger.exception(
+                "[!] APITimeoutError: {}".format(e)
+            )
+            print("\n[!] Connection timeout, unable to reach API.")
+            sys.exit(1)
+        except exceptions.ProtonSessionWrapperError as e:
+            print("\n[!] Unknown API error occured: {}".format(e.error))
+            sys.exit(1)
         except Exception as e:
             capture_exception(e)
             logger.exception(
