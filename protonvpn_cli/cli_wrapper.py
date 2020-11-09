@@ -114,7 +114,8 @@ class CLIWrapper():
             self.connection_manager.remove_connection(
                 self.user_conf_manager,
                 self.ks_manager,
-                self.ipv6_lp_manager
+                self.ipv6_lp_manager,
+                self.reconector_manager
             )
         except exceptions.ConnectionNotFound as e:
             print("[!] Unable to disconnect: {}".format(e))
