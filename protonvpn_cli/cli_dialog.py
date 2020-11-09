@@ -3,9 +3,11 @@ import subprocess
 import sys
 
 from dialog import Dialog
-
-from protonvpn_nm_lib.constants import ProtocolEnum, SUPPORTED_FEATURES
+from protonvpn_nm_lib import exceptions
+from protonvpn_nm_lib.constants import (CACHED_SERVERLIST, SUPPORTED_FEATURES,
+                                        ProtocolEnum)
 from protonvpn_nm_lib.logger import logger
+from protonvpn_nm_lib.services import capture_exception
 
 
 def dialog(server_manager, session):
@@ -27,7 +29,30 @@ def dialog(server_manager, session):
               "Please install dialog via your package manager.")
         sys.exit(1)
 
-    server_manager.cache_servers(session)
+    is_previous_cache_available = False
+    if os.path.isfile(CACHED_SERVERLIST):
+        is_previous_cache_available = True
+
+    try:
+        server_manager.cache_servers(session)
+    except exceptions.APITimeoutError as e:
+        if not is_previous_cache_available:
+            logger.exception(
+                "[!] APITimeoutError: {}".format(e)
+            )
+            print("\n[!] Connection timeout, unable to reach API.")
+            sys.exit(1)
+    except exceptions.ProtonSessionWrapperError as e:
+        if not is_previous_cache_available:
+            print("\n[!] Unknown API error occured: {}".format(e.error))
+            sys.exit(1)
+    except Exception as e:
+        if not is_previous_cache_available:
+            capture_exception(e)
+            logger.exception(
+                "[!] Unknown error: {}".format(e)
+            )
+            print("[!] Unknown error occured: {}".format(e))
     servers = server_manager.extract_server_list()
     filtered_servers = server_manager.filter_servers(session, servers)
     countries = generate_country_dict(server_manager, filtered_servers)
