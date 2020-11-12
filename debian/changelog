@@ -1,3 +1,9 @@
+protonvpn-cli (3.0.0-1) UNRELEASED; urgency=low
+
+  * Initial beta release
+
+ -- Proton Technologies AG <opensource@proton.me>  Mon, 12 Nov 2020 17:46:49 +0000
+
 protonvpn-cli (0.0.1-4) unstable; urgency=low
 
   * Add support for protonvpn-nm-lib v0.0.6-5
