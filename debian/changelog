@@ -1,8 +1,14 @@
+protonvpn-cli (3.0.0-2) UNRELEASED; urgency=low
+
+  * Add support for protonvpn-nm-lib v0.1.0-1
+
+ -- Proton Technologies AG <opensource@proton.me>  Fri, 13 Nov 2020 15:22:23 +0000
+
 protonvpn-cli (3.0.0-1) UNRELEASED; urgency=low
 
   * Initial beta release
 
- -- Proton Technologies AG <opensource@proton.me>  Mon, 12 Nov 2020 17:46:49 +0000
+ -- Proton Technologies AG <opensource@proton.me>  Thu, 12 Nov 2020 17:46:49 +0000
 
 protonvpn-cli (0.0.1-4) unstable; urgency=low
 

@@ -139,6 +139,7 @@ class CLIWrapper():
     def login(self, force=False):
         """Proxymethod to login user with ProtonVPN credentials."""
         exit_type = 1
+        logger.info("Checking for existing session")
         if (
             self.get_existing_session(exit_type, is_connecting=False)
             and not force
@@ -146,8 +147,16 @@ class CLIWrapper():
             print("\nYou are already logged in!")
             sys.exit()
 
-        protonvpn_username = input("\nEnter your ProtonVPN username: ")
+        logger.info("Asking for ProtonVPN credentials")
+
+        print(dedent("""
+            ProtonVPN Login
+            ----------------
+        """))
+        protonvpn_username = input("Enter your ProtonVPN username: ")
         protonvpn_password = getpass.getpass("Enter your ProtonVPN password: ")
+
+        logger.info("Credentials provided, attempting to login")
         self.login_user(exit_type, protonvpn_username, protonvpn_password)
 
     def logout(self, session=None, _pass_check=None, _removed=None):
@@ -799,27 +808,22 @@ class CLIWrapper():
 
     def login_user(self, exit_type, protonvpn_username, protonvpn_password):
 
-        print("Attempting to login...")
+        print("Attempting to login...\n")
         try:
             self.user_manager.login(protonvpn_username, protonvpn_password)
         except (TypeError, ValueError) as e:
-            print("[!] Unable to authenticate. {}".format(e))
-        except exceptions.IncorrectCredentialsError:
-            print(
-                "[!] Unable to authenticate. "
-                + "The provided credentials are incorrect."
-            )
-        except exceptions.APIAuthenticationError:
-            print("[!] Unable to authenticate. Unexpected API response.")
-        except exceptions.APITimeoutError as e:
-            logger.exception(
-                "[!] APITimeoutError: {}".format(e)
-            )
-            print("\n[!] Connection timeout, unable to reach API.")
-            sys.exit(1)
+            print("[!] Unable to authenticate: {}".format(e))
+        except (exceptions.API8002Error, exceptions.API85032Error) as e:
+            print("[!] {}".format(e))
+        except exceptions.APITimeoutError:
+            print("[!] Connection timeout, unable to reach API.")
+        except (exceptions.UnhandledAPIError, exceptions.APIError) as e:
+            print("[!] Unhandled API error occured: {}".format(e))
         except exceptions.ProtonSessionWrapperError as e:
-            print("\n[!] Unknown API error occured: {}".format(e.error))
-            sys.exit(1)
+            logger.exception(
+                "[!] ProtonSessionWrapperError: {}".format(e)
+            )
+            print("[!] Unknown API error occured: {}".format(e))
         except Exception as e:
             capture_exception(e)
             logger.exception(
@@ -829,7 +833,7 @@ class CLIWrapper():
         else:
             exit_type = 0
             logger.info("Successful login.")
-            print("\nLogin successful!")
+            print("Login successful!")
         finally:
             sys.exit(exit_type)
 
