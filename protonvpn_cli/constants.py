@@ -1,4 +1,4 @@
-APP_VERSION = "0.0.1"
+APP_VERSION = "3.0.0"
 USAGE = """
 ProtonVPN CLI
 Usage:

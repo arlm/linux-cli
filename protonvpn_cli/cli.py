@@ -4,12 +4,19 @@ import sys
 from protonvpn_nm_lib.enums import ProtocolEnum
 from protonvpn_nm_lib.logger import logger
 from protonvpn_nm_lib.constants import APP_VERSION as lib_version
+from proton.constants import VERSION as proton_version
 from .constants import APP_VERSION, USAGE
 from .cli_wrapper import CLIWrapper
 
 
 class NetworkManagerPrototypeCLI():
     def __init__(self):
+        logger.info(
+            "ProtonVPN Official CLI v{} "
+            "(protonvpn-nm-lib v{}; proton-client v{})".format(
+                APP_VERSION, lib_version, proton_version
+            )
+        )
         parser = argparse.ArgumentParser(add_help=False)
         parser.add_argument("command", nargs="?")
         parser.add_argument(
@@ -22,8 +29,9 @@ class NetworkManagerPrototypeCLI():
 
         if args.version:
             print(
-                "\nProtonVPN CLI v{} (ProtonVPN lib v{})".format(
-                    APP_VERSION, lib_version
+                "\nProtonVPN Official CLI v{} "
+                "(protonvpn-nm-lib v{}; proton-client v{})".format(
+                    APP_VERSION, lib_version, proton_version
                 )
             )
             parser.exit(1)
