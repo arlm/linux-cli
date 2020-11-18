@@ -291,16 +291,7 @@ class CLIWrapper():
                 continue
 
             os.system("clear")
-
-            try:
-                resp = _call_method()
-            except exceptions.ConfigurationsSelectedOptionError as e:
-                print("\n[!] {}\n".format(e))
-                continue
-            else:
-                os.system("clear")
-                if resp is not None and len(resp) > 0:
-                    print("\n{}\n".format(resp))
+            _call_method()
 
     def ask_default_protocol(self):
         proto_short = {
@@ -310,61 +301,55 @@ class CLIWrapper():
             "w": ProtocolEnum.WIREGUARD,
         }
 
-        while True:
+        print(
+            "Please select default protocol:\n"
+            "\n"
+            "[t]cp\n"
+            "[u]dp\n"
+            # "[i]kev2\n"
+            "----------\n"
+            "[e]xit\n"
+        )
+
+        user_choice = input(
+            "Default protocol: "
+        ).strip()
+
+        user_choice = user_choice.lower()
+
+        if user_choice == "e":
+            sys.exit()
+
+        try:
+            if len(user_choice) == 1:
+                user_choice = proto_short[user_choice]
+        except KeyError:
             print(
-                "Please select default protocol:\n"
-                "\n"
-                "[t]cp\n"
-                "[u]dp\n"
-                "[i]kev2\n"
-                "[w]reguard\n"
-                "----------\n"
-                "[r]eturn\n"
-                "[e]xit\n"
+                "\nSelected option \"{}\" is incorrect. ".format(
+                    user_choice
+                ) + "Please select from one of the possible "
+                "OpenVPN protocols [t]cp | [u]dp"
             )
+            sys.exit(1)
 
-            user_choice = input(
-                "Default protocol: "
-            ).strip()
-
-            user_choice = user_choice.lower()
-
-            if user_choice == "r":
-                os.system("clear")
-                return
-            if user_choice == "e":
-                sys.exit()
-
-            try:
-                if len(user_choice) == 1:
-                    user_choice = proto_short[user_choice]
-            except KeyError:
-                print(
-                    "Selected option \"{}\" is incorrect. ".format(user_choice)
-                    + "Please select from one of the possible protocols "
-                    + "[ [t]cp | [u]dp | [i]kev2 | [w]reguard ]"
-                )
-                time.sleep(self.time_sleep_value)
-                continue
-
-            try:
-                index = FLAT_SUPPORTED_PROTOCOLS.index(user_choice)
-            except ValueError:
-                print(
-                    "[!] Selected option \"{}\" is either incorrect ".format(
-                        user_choice
-                    ) + "or protocol is (yet) not supported"
-                )
-                time.sleep(self.time_sleep_value)
-                continue
-
-            self.user_conf_manager.update_default_protocol(
-                FLAT_SUPPORTED_PROTOCOLS[index]
+        try:
+            index = FLAT_SUPPORTED_PROTOCOLS.index(user_choice)
+        except ValueError:
+            print(
+                "\n[!] Selected option \"{}\" is either incorrect ".format(
+                    user_choice
+                ) + "or protocol is (yet) not supported"
             )
+            sys.exit(1)
 
-            return "Successfully updated default protocol to {}!".format(
-                user_choice.upper()
-            )
+        self.user_conf_manager.update_default_protocol(
+            FLAT_SUPPORTED_PROTOCOLS[index]
+        )
+
+        print("\nSuccessfully updated default protocol to {}!".format(
+            user_choice.upper()
+        ))
+        sys.exit()
 
     def ask_dns(self):
         user_choice_options_dict = {
@@ -375,82 +360,79 @@ class CLIWrapper():
 
         def ask_custom_dns():
             custom_dns = input(
-                "Please enter your custom DNS servers (space separated): "
+                "Please enter your custom DNS servers, "
+                "max 3 servers (space separated): "
             )
             custom_dns = custom_dns.strip().split()
 
             # Check DNS Servers for validity
             if len(custom_dns) > 3:
-                print("[!] Don't enter more than 3 DNS Servers")
-                return
+                print(
+                    "\n[!] You provided more then 3 DNS servers. "
+                    "Please enter up to 3 DNS server IPs."
+                )
+                sys.exit(1)
 
             for dns in custom_dns:
                 if not self.user_conf_manager.is_valid_ip(dns):
                     print(
                         "[!] {0} is invalid. Please try again.\n".format(dns)
                     )
-                    return
+                    sys.exit(1)
             return " ".join(dns for dns in custom_dns)
 
-        while True:
+        print(
+            "Please select what you want to do:\n"
+            "\n"
+            "[a]llow automatic DNS management\n"
+            "[c]ustom DNS management\n"
+            "[s]how allowed custom DNS\n"
+            "----------\n"
+            "[e]xit\n"
+        )
+
+        user_choice = input(
+            "Selected option: "
+        ).strip()
+
+        user_choice = user_choice.lower()
+
+        if user_choice == "e":
+            sys.exit()
+        elif user_choice == "s":
+            user_configs = self.user_conf_manager.get_user_configurations()
+            dns_settings = user_configs[UserSettingEnum.CONNECTION]["dns"]
             print(
-                "Please select what you want to do:\n"
-                "\n"
-                "[a]llow automatic DNS management\n"
-                "[d]isallow automatic DNS management\n"
-                "[c]ustom DNS management\n"
-                "[s]how allowed custom DNS\n"
-                "----------\n"
-                "[r]eturn\n"
-                "[e]xit\n"
-            )
-
-            user_choice = input(
-                "Selected option: "
-            ).strip()
-
-            user_choice = user_choice.lower()
-
-            if user_choice == "r":
-                os.system("clear")
-                return
-            if user_choice == "e":
-                sys.exit()
-            if user_choice == "s":
-                user_configs = self.user_conf_manager.get_user_configurations()
-                dns_settings = user_configs[UserSettingEnum.CONNECTION]["dns"]
-                print(
-                    "Your custom DNSs are: {}\n".format(
-                        dns_settings["custom_dns"]
-                    )
+                "Custom DNS servers: {}\n".format(
+                    dns_settings["custom_dns"]
                 )
-                return
-
-            try:
-                user_int_choice = user_choice_options_dict[user_choice]
-            except KeyError:
-                print(
-                    "[!] Invalid choice. "
-                    "Please enter the value of a valid choice.\n"
-                )
-                time.sleep(self.time_sleep_value)
-                continue
-
-            custom_dns_list = None
-            if user_int_choice == UserSettingStatusEnum.CUSTOM:
-                custom_dns_list = ask_custom_dns()
-
-            self.user_conf_manager.update_dns(user_int_choice, custom_dns_list)
-
-            context_msg = "disallow"
-            if user_int_choice == UserSettingStatusEnum.ENABLED:
-                context_msg = "allow"
-            elif user_int_choice == UserSettingStatusEnum.CUSTOM:
-                context_msg = "custom"
-
-            return "Successfully updated DNS settings to {}!".format(
-                context_msg
             )
+            sys.exit(1)
+
+        try:
+            user_int_choice = user_choice_options_dict[user_choice]
+        except KeyError:
+            print(
+                "[!] Invalid choice. "
+                "Please enter the value of a valid choice.\n"
+            )
+            sys.exit(1)
+
+        custom_dns_list = None
+        if user_int_choice == UserSettingStatusEnum.CUSTOM:
+            custom_dns_list = ask_custom_dns()
+
+        self.user_conf_manager.update_dns(user_int_choice, custom_dns_list)
+
+        if user_int_choice == UserSettingStatusEnum.ENABLED:
+            context_msg = "allow"
+        elif user_int_choice == UserSettingStatusEnum.CUSTOM:
+            context_msg = "custom"
+
+        print("\nSuccessfully updated DNS settings to {}!".format(
+            context_msg
+        ))
+        sys.exit()
 
     def ask_killswitch(self):
         user_choice_options_dict = {
@@ -458,48 +440,43 @@ class CLIWrapper():
             "s": KillswitchStatusEnum.SOFT,
             "d": KillswitchStatusEnum.DISABLED
         }
-        while True:
+        print(
+            "Please select what you want to do:\n"
+            "\n"
+            "[h]ard killswitch management\n"
+            "[s]oft killswitch management\n"
+            "[d]isable killswitch management\n"
+            "----------\n"
+            "[e]xit\n"
+        )
+
+        user_choice = input(
+            "Selected option: "
+        ).strip()
+
+        if user_choice == "e":
+            sys.exit()
+
+        try:
+            user_int_choice = user_choice_options_dict[user_choice]
+        except KeyError:
             print(
-                "Please select what you want to do:\n"
-                "\n"
-                "[h]ard killswitch management\n"
-                "[s]oft killswitch management\n"
-                "[d]isable killswitch management\n"
-                "----------\n"
-                "[r]eturn\n"
-                "[e]xit\n"
+                "[!] Invalid choice. "
+                "Please enter the value of a valid choice.\n"
             )
+            sys.exit(1)
 
-            user_choice = input(
-                "Selected option: "
-            ).strip()
+        self.user_conf_manager.update_killswitch(user_int_choice)
+        self.ks_manager.manage(user_int_choice, True)
 
-            if user_choice == "r":
-                os.system("clear")
-                return
-            if user_choice == "e":
-                sys.exit()
+        context_msg = "disabled"
+        if user_int_choice == KillswitchStatusEnum.HARD:
+            context_msg = "hard"
+        elif user_int_choice == KillswitchStatusEnum.SOFT:
+            context_msg = "soft"
 
-            try:
-                user_int_choice = user_choice_options_dict[user_choice]
-            except KeyError:
-                print(
-                    "[!] Invalid choice. "
-                    "Please enter the value of a valid choice.\n"
-                )
-                time.sleep(self.time_sleep_value)
-                continue
-
-            self.user_conf_manager.update_killswitch(user_int_choice)
-            self.ks_manager.manage(user_int_choice, True)
-
-            context_msg = "disabled"
-            if user_int_choice == KillswitchStatusEnum.HARD:
-                context_msg = "hard"
-            elif user_int_choice == KillswitchStatusEnum.SOFT:
-                context_msg = "soft"
-
-            return "Successfully updated KillSwitch to {}!".format(context_msg)
+        print("\nSuccessfully updated KillSwitch to {}!".format(context_msg))
+        sys.exit()
 
     def restore_default_configurations(self):
         user_choice = input(
@@ -517,7 +494,8 @@ class CLIWrapper():
 
         self.user_conf_manager.reset_default_configs()
 
-        return "Configurations were successfully restored back to defaults!"
+        print("\nConfigurations were successfully restored back to defaults!")
+        sys.exit()
 
     def extract_server_info(self, servername):
         """Extract server information to be displayed.
