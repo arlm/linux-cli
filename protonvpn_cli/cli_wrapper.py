@@ -603,12 +603,16 @@ class CLIWrapper():
             "ProtonVPN connection was successfully added to Network Manager."
         )
 
-    def get_ovpn_credentials(self, exit_type, has_retried=False):
+    def get_ovpn_credentials(self, exit_type, retry=False):
         """Proxymethod to get user OVPN credentials."""
-        openvpn_username, openvpn_password = None, None
         logger.info("Getting openvpn credentials")
 
+        openvpn_username, openvpn_password = None, None
+        error = False
+
         try:
+            if retry:
+                self.user_manager.cache_user_data()
             openvpn_username, openvpn_password = self.user_manager.get_stored_vpn_credentials( # noqa
                 self.session
             )
@@ -621,33 +625,25 @@ class CLIWrapper():
         except (
             exceptions.JSONDataError,
             exceptions.JSONDataNoneError
-        ) as e:
-            if not has_retried:
-                logger.info(
-                    "[!] JSONDataError/JSONDataNoneError: {}"
-                    "\n--->User data was not previously cached. "
-                    "Caching user data and re-attempt to "
-                    "get ovpn credentials.".format(e)
-                )
-                self.cache_user_data()
-                return self.get_ovpn_credentials(exit_type, False)
-            else:
-                print(
-                    "\n[!] Missing user data. Please, "
-                    "login first."
-                )
-                sys.exit(exit_type)
+        ):
+            error = "cache_user_data"
         except exceptions.APITimeoutError as e:
             logger.exception(
                 "[!] APITimeoutError: {}".format(e)
             )
             print("\n[!] Connection timeout, unable to reach API.")
             sys.exit(1)
+        except exceptions.API10013Error:
+            print(
+                "\n[!] Current session is invalid, "
+                "please logout and login again."
+            )
+            sys.exit(1)
         except exceptions.ProtonSessionWrapperError as e:
             logger.exception(
                 "[!] Unknown ProtonSessionWrapperError: {}".format(e)
             )
-            print("\n[!] Unknown API error occured: {}".format(e.error))
+            print("\n[!] Unknown API error occured: {}".format(e))
             sys.exit(1)
         except Exception as e:
             capture_exception(e)
@@ -656,19 +652,12 @@ class CLIWrapper():
             )
             print("\n[!] Unknown error occured: {}.".format(e))
             sys.exit(exit_type)
-        else:
-            return openvpn_username, openvpn_password
 
-    def cache_user_data(self):
-        """Cache user data."""
-        try:
-            self.user_manager.cache_user_data()
-        except exceptions.APITimeoutError as e:
-            logger.exception(
-                "[!] APITimeoutError (userdata): {}".format(e)
-                )
-            print("\n[!] Connection timeout, unable to reach API.")
-            sys.exit(1)
+        if error:
+            self.get_ovpn_credentials(1, True)
+            return
+
+        return openvpn_username, openvpn_password
 
     def get_cert_filename_and_domain(
         self, cli_commands,
@@ -725,6 +714,12 @@ class CLIWrapper():
         except exceptions.API403Error as e:
             print("\n[!] API403Error: {}".format(e.error))
             handle_error = 403
+        except exceptions.API10013Error:
+            print(
+                "\n[!] Current session is invalid, "
+                "please logout and login again."
+            )
+            sys.exit(1)
         except exceptions.APITimeoutError as e:
             logger.exception(
                 "[!] APITimeoutError: {}".format(e)
