@@ -58,10 +58,11 @@ class CLIWrapper():
         command = False
         exit_type = 1
         protocol = self.determine_protocol(args)
-
         self.session = self.get_existing_session(exit_type)
 
         self.remove_existing_connection()
+
+        self.check_internet_conn()
 
         for cls_attr in inspect.getmembers(args):
             if cls_attr[0] in cli_commands and cls_attr[1]:
@@ -147,6 +148,8 @@ class CLIWrapper():
             print("\nYou are already logged in!")
             sys.exit()
 
+        self.check_internet_conn()
+
         logger.info("Asking for ProtonVPN credentials")
 
         print(dedent("""
@@ -166,6 +169,10 @@ class CLIWrapper():
         if _pass_check is None and _removed is None:
             print("Logging out...")
             session = self.get_existing_session(exit_type)
+            try:
+                session.logout()
+            except exceptions.ProtonSessionWrapperError:
+                pass
             self.remove_existing_connection()
             _pass_check = []
             _removed = []
@@ -195,11 +202,6 @@ class CLIWrapper():
             )
             print("[!] Unknown error occured: {}.".format(e))
             sys.exit(exit_type)
-
-        try:
-            session.logout()
-        except exceptions.ProtonSessionWrapperError:
-            pass
 
         logger.info("Successful logout.")
         print("Logout successful!")
@@ -496,6 +498,24 @@ class CLIWrapper():
 
         print("\nConfigurations were successfully restored back to defaults!")
         sys.exit()
+
+    def check_internet_conn(self):
+        try:
+            self.connection_manager.check_internet_connectivity(
+                self.user_conf_manager.killswitch
+            )
+        except exceptions.InternetConnectionError:
+            print(
+                "\n[!] No Internet connection found. "
+                "Please make sure you are connected and retry."
+            )
+            sys.exit(1)
+        except exceptions.UnreacheableAPIError:
+            print(
+                "\n[!] Couldn't reach Proton API."
+                "This might happen due to connection issues or network blocks."
+            )
+            sys.exit(1)
 
     def extract_server_info(self, servername):
         """Extract server information to be displayed.
