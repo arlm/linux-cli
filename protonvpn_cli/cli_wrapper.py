@@ -531,18 +531,32 @@ class CLIWrapper():
         )
 
         servers = self.server_manager.extract_server_list()
-        country_code = self.server_manager.extract_server_value(
-            servername, "ExitCountry", servers
-        )
-        country = self.server_manager.extract_country_name(country_code)
-        load = self.server_manager.extract_server_value(
-            servername, "Load", servers
-        )
-        features = [
-            self.server_manager.extract_server_value(
-                servername, "Features", servers
+        try:
+            country_code = self.server_manager.extract_server_value(
+                servername, "ExitCountry", servers
             )
-        ]
+            country = self.server_manager.extract_country_name(country_code)
+            load = self.server_manager.extract_server_value(
+                servername, "Load", servers
+            )
+            features = [
+                self.server_manager.extract_server_value(
+                    servername, "Features", servers
+                )
+            ]
+        except IndexError as e:
+            logger.exception("[!] IndexError: {}".format(e))
+            print(
+                "\n[!] The server you have connected to is not available. "
+                "If you are currently connected to the server, "
+                "you will be soon disconnected. "
+                "Please connect to another server."
+                )
+            sys.exit(1)
+        except Exception as e:
+            logger.exception("[!] Unknown error: {}".format(e))
+            print("\n[!] Unknown error: {}".format(e))
+            sys.exit(1)
 
         features_list = []
         for feature in features:

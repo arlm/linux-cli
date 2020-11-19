@@ -1,12 +1,13 @@
-protonvpn-cli (3.0.0-6) UNRELEASED; urgency=low
+protonvpn-cli (3.0.0-7) UNRELEASED; urgency=low
 
   * Add support for protonvpn-nm-lib v0.1.0-1
   * Print and log versions of proton sub-packges
   * Update version constant
   * Bugfix: invalid session, filter custom DNS input 
   * Add support for protonvpn-nm-lib v0.1.0-4
+  * Bugfix: correctly display status message if server is not found
 
- -- Proton Technologies AG <opensource@proton.me>  Thu, 19 Nov 2020 12:19:13 +0000
+ -- Proton Technologies AG <opensource@proton.me>  Thu, 19 Nov 2020 12:45:23 +0000
 
 protonvpn-cli (3.0.0-1) UNRELEASED; urgency=low
 
