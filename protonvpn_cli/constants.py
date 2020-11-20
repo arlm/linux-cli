@@ -27,17 +27,18 @@ examples:
 """.format(APP_VERSION)
 
 LOGIN_HELP = """
-usage:  protonvpn-cli login [-h | --help]
-        [(-u | --username) <protonvpn_username>]
+usage:  protonvpn-cli login [-h | --help] <pvpn_username>
+
+
+positional arguments:
+    <pvpn_username> ProtonVPN Username
 
 optional arguments:
-    -u, --username  ProtonVPN username.
     -h, --help      Display help message.
 
 examples:
-    protonvpn-cli login -u ProtonVPN_username
-    protonvpn-cli login --username ProtonVPN_username
-    protonvpn-cli login --help
+    protonvpn-cli login pvpn_username
+    protonvpn-cli login --help pvpn_username
 """
 
 CONNECT_HELP = """

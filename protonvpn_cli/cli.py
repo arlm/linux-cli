@@ -125,7 +125,7 @@ class NetworkManagerPrototypeCLI():
             add_help=False
         )
         parser.add_argument(
-            "-u", "--username",
+            "username",
             help="ProtonVPN username.",
             nargs=1
         )
@@ -137,7 +137,7 @@ class NetworkManagerPrototypeCLI():
             print(LOGIN_HELP)
             parser.exit(1)
 
-        self.cli_wrapper.login(args.username.pop())
+        self.cli_wrapper.login(args.username)
 
     def logout(self):
         """Logout ProtonVPN."""

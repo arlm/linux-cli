@@ -157,7 +157,8 @@ class CLIWrapper():
         self.check_internet_conn()
 
         logger.info("Asking for ProtonVPN credentials")
-
+        if isinstance(username, list):
+            username = username.pop()
         protonvpn_password = getpass.getpass("Enter your ProtonVPN password: ")
 
         logger.info("Credentials provided, attempting to login")
@@ -215,6 +216,8 @@ class CLIWrapper():
             print("\nNo active ProtonVPN connection.")
             sys.exit()
 
+        logger.info("Displaying connection status")
+
         country, load, features, tier = self.extract_server_info(
             conn_status[ConnectionMetadataEnum.SERVER]
         )
@@ -264,6 +267,8 @@ class CLIWrapper():
         sys.exit()
 
     def configure(self, args):
+        """Configure user settings."""
+        logger.info("Starting to configure")
         cli_commands = dict(
             protocol=self.set_protocol,
             dns=self.set_dns,
@@ -271,21 +276,26 @@ class CLIWrapper():
             list=self.set_dns,
             default=self.restore_default_configurations,
         )
-        # print(args)
-        # print()
-        # sys.exit(1)
+
         for cls_attr in inspect.getmembers(args):
             if cls_attr[0] in cli_commands and cls_attr[1]:
                 command = list(cls_attr)
 
         cli_commands[command[0]](command)
 
-    def set_protocol(self, value):
-        protocol_value = [value[1].pop()].pop()
+    def set_protocol(self, args):
+        """Set default protocol setting.
+
+        Args:
+            Namespace (object): list objects with cli args
+        """
+        logger.info("Setting protocol to: {}".format(args))
+        protocol_value = [args[1].pop()].pop()
 
         try:
             index = FLAT_SUPPORTED_PROTOCOLS.index(protocol_value)
         except ValueError:
+            logger.error("Select option is incorrect.")
             print(
                 "\n[!] Selected option \"{}\" is either incorrect ".format(
                     protocol_value
@@ -298,39 +308,50 @@ class CLIWrapper():
            protocol
         )
 
+        logger.info("Default protocol has been updated.")
+
         if protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]:
             protocol = "OpenVPN (" + protocol.upper() + ")"
 
         print("\nDefault connection protocol has been updated to {}".format(
             protocol
         ))
+        sys.exit()
 
-    def set_dns(self, value):
-        dns_command = value[0]
+    def set_dns(self, args):
+        """Set DNS setting.
+
+        Args:
+            Namespace (object): list objects with cli args
+        """
+        logger.info("Setting dns to: {}".format(args))
+        dns_command = args[0]
 
         custom_dns_list = []
 
         if dns_command == "list":
+            logger.info("Displaying custom DNS list")
             user_configs = self.user_conf_manager.get_user_configurations()
             dns_settings = user_configs[UserSettingEnum.CONNECTION]["dns"]
             if len(dns_settings["custom_dns"]) > 0:
                 custom_dns_list = ", ".join(dns_settings["custom_dns"].split())
             print(
-                "\nCustom DNS servers: {}".format(
+                "\n{}".format(
                     "No custom DNS found"
                     if not len(dns_settings["custom_dns"]) else
-                    custom_dns_list
+                    "Custom DNS servers: " + custom_dns_list
                 )
             )
             sys.exit()
 
-        reminder = "These changes will apply the next time you connect to the VPN." # noqa
+        reminder = "These changes will apply the next time you connect to VPN." # noqa
         confirmation_message = "\nDNS automatic configuration enabled.\n" + reminder # noqa
         user_choice = UserSettingStatusEnum.ENABLED
         if dns_command == "ip":
             user_choice = UserSettingStatusEnum.CUSTOM
-            custom_dns_ips = value[1]
+            custom_dns_ips = args[1]
             if len(custom_dns_ips) > 3:
+                logger.error("More then 3 custom DNS IPs were provided")
                 print(
                     "\n[!] You provided more then 3 DNS servers. "
                     "Please enter up to 3 DNS server IPs."
@@ -338,11 +359,13 @@ class CLIWrapper():
                 sys.exit(1)
             for dns in custom_dns_ips:
                 if not self.user_conf_manager.is_valid_ip(dns):
+                    logger.error("{} is an invalid IP".format(dns))
                     print(
                         "\n[!] {0} is invalid. "
                         "Please provide a valid IP DNS server.".format(dns)
                     )
                     sys.exit(1)
+
             custom_dns_list = " ".join(dns for dns in custom_dns_ips)
             print_custom_dns_list = ", ".join(dns for dns in custom_dns_ips)
             confirmation_message = "\nDNS will be managed by "\
@@ -351,8 +374,11 @@ class CLIWrapper():
                     reminder
                 )
 
+        logger.info(confirmation_message)
+
         self.user_conf_manager.update_dns(user_choice, custom_dns_list)
         print(confirmation_message)
+        sys.exit()
 
     def set_killswitch(self, args):
         """Set kill switch setting.
@@ -360,6 +386,7 @@ class CLIWrapper():
         Args:
             Namespace (object): list objects with cli args
         """
+        logger.info("Setting kill switch to: {}".format(args))
         user_choice_options_dict = dict(
             always_on=KillswitchStatusEnum.HARD,
             on=KillswitchStatusEnum.SOFT,
@@ -381,6 +408,7 @@ class CLIWrapper():
         sys.exit()
 
     def restore_default_configurations(self, _):
+        """Restore default configurations."""
         user_choice = input(
             "\nAre you sure you want to restore to "
             "default configurations? [y/N]: "
@@ -388,6 +416,8 @@ class CLIWrapper():
 
         if not user_choice == "y":
             return
+
+        logger.info("Restoring default configurations")
 
         print("Restoring default ProtonVPN configurations...")
         time.sleep(0.5)
