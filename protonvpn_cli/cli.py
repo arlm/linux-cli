@@ -5,7 +5,7 @@ from protonvpn_nm_lib.enums import ProtocolEnum
 from protonvpn_nm_lib.logger import logger
 from protonvpn_nm_lib.constants import APP_VERSION as lib_version
 from proton.constants import VERSION as proton_version
-from .constants import APP_VERSION, MAIN_CLI_HELP, CONNECT_HELP
+from .constants import APP_VERSION, MAIN_CLI_HELP, LOGIN_HELP, CONNECT_HELP
 from .cli_wrapper import CLIWrapper
 
 
@@ -118,7 +118,24 @@ class NetworkManagerPrototypeCLI():
 
     def login(self):
         """Login ProtonVPN."""
-        self.cli_wrapper.login()
+        parser = argparse.ArgumentParser(
+            description="Connect to ProtonVPN", prog="protonvpn-cli login",
+            add_help=False
+        )
+        parser.add_argument(
+            "-u", "--username",
+            help="ProtonVPN username.",
+            nargs=1
+        )
+        parser.add_argument(
+            "-h", "--help", required=False, action="store_true"
+        )
+        args = parser.parse_args(sys.argv[2:])
+        if args.help or args.username is None:
+            print(LOGIN_HELP)
+            parser.exit(1)
+
+        self.cli_wrapper.login(args.username.pop())
 
     def logout(self):
         """Logout ProtonVPN."""

@@ -141,30 +141,28 @@ class CLIWrapper():
         finally:
             sys.exit(exit_type)
 
-    def login(self, force=False):
+    def login(self, username=None, force=False, check_session=False):
         """Proxymethod to login user with ProtonVPN credentials."""
         exit_type = 1
         logger.info("Checking for existing session")
         if (
-            self.get_existing_session(exit_type, is_connecting=False)
-            and not force
+            not force
+            and self.get_existing_session(exit_type, is_connecting=False)
         ):
             print("\nYou are already logged in!")
             sys.exit()
+
+        if check_session:
+            return
 
         self.check_internet_conn()
 
         logger.info("Asking for ProtonVPN credentials")
 
-        print(dedent("""
-            ProtonVPN Login
-            ----------------
-        """))
-        protonvpn_username = input("Enter your ProtonVPN username: ")
         protonvpn_password = getpass.getpass("Enter your ProtonVPN password: ")
 
         logger.info("Credentials provided, attempting to login")
-        self.login_user(exit_type, protonvpn_username, protonvpn_password)
+        self.login_user(exit_type, username, protonvpn_password)
 
     def logout(self, session=None, _pass_check=None, _removed=None):
         """Proxymethod to logout user."""

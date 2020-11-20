@@ -2,7 +2,7 @@ APP_VERSION = "3.0.0"
 MAIN_CLI_HELP = """
 ProtonVPN CLI v{}
 
-usage: protonvpn-cli [--version | --help] <command>
+usage:  protonvpn-cli [--version | --help] <command>
 
 commands:
     login               Login with ProtonVPN credentials.
@@ -26,10 +26,24 @@ examples:
     protonvpn-cli (-v | --version)
 """.format(APP_VERSION)
 
+LOGIN_HELP = """
+usage:  protonvpn-cli login [(-u | --username) <protonvpn_username>]
+        [--version | --help]
+
+optional arguments:
+    -u, --username  ProtonVPN username.
+    -h, --help      Display help message.
+
+examples:
+    protonvpn-cli login -u ProtonVPN_username
+    protonvpn-cli login --username ProtonVPN_username
+    protonvpn-cli login --help
+"""
+
 CONNECT_HELP = """
-usage: protonvpn-cli (c | connect) [-h | --help] [<servername>]
-    [[-f | --fastest] | [-r | --random] | [--cc] | [--sc] | [--p2p] | [--tor]]
-    [[-p | --protocol] <protocol>]
+usage:  protonvpn-cli (c | connect) [-h | --help] [<servername>]
+        [[-f | --fastest] | [-r | --random] | [--cc] | [--sc] | [--p2p] | [--tor]]
+        [[-p | --protocol] <protocol>]
 
 positional arguments:
     <servername>    Directly connecto to
@@ -53,4 +67,5 @@ examples:
     protonvpn-cli c --p2p -p tcp
     protonvpn-cli connect --tor
     protonvpn-cli c --random --protocol udp
+    protonvpn-cli c --help
 """
