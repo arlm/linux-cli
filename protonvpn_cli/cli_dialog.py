@@ -16,7 +16,11 @@ class ProtonVPNDialog:
     def __init__(self, server_manager, usermanager):
         self.server_manager = server_manager
         self.usermanager = usermanager
-        self.user_tier = self.usermanager.tier
+        try:
+            self.user_tier = self.usermanager.tier
+        except exceptions.JSONDataNoneError:
+            self.user_tier = False
+
         self.session = None
 
     def start(self, session):
