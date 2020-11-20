@@ -27,8 +27,8 @@ examples:
 """.format(APP_VERSION)
 
 LOGIN_HELP = """
-usage:  protonvpn-cli login [(-u | --username) <protonvpn_username>]
-        [--version | --help]
+usage:  protonvpn-cli login [-h | --help]
+        [(-u | --username) <protonvpn_username>]
 
 optional arguments:
     -u, --username  ProtonVPN username.
@@ -68,4 +68,46 @@ examples:
     protonvpn-cli connect --tor
     protonvpn-cli c --random --protocol udp
     protonvpn-cli c --help
+"""
+
+CONFIG_HELP = """
+usage:  protonvpn-cli config [-h | --help]
+        [--dns <command> [--ip <IP> | --list] | [-p | --protocol] <protocol>]
+
+optional arguments:
+    --dns <command> Change DNS configurations
+                    (custom | automatic).
+    --ip            Custom DNS IP (max 3 IPs).
+    --list          List custom IPs.
+    -p, --protocol  Change default protocol.
+    -h, --help      Display help message.
+
+examples:
+    protonvpn-cli config --dns automatic
+    protonvpn-cli config --dns custom --ip 192.168.0.1
+    protonvpn-cli config --dns custom --list
+    protonvpn-cli config -p tcp
+    protonvpn-cli config -protocol udp
+    protonvpn-cli config --help
+"""
+
+KS_HELP = """
+usage:  protonvpn-cli (ks | killswitch) [-h | --help]
+        [--on | --off | --always-on]
+
+optional arguments:
+    --on            Start kill switch upon connecting to VPN
+                    and stop it when disconnecting from VPN.
+    --off           Stop and remove kill switch.
+    --always-on     Start kill switch regardless of VPN connection.
+                    Warning: This takes effect immediatly and you
+                    might end up without internet connection.
+                    Either connect to VPN or turn the ks off.
+    -h, --help      Display help message.
+
+examples:
+    protonvpn-cli config --on
+    protonvpn-cli config --off
+    protonvpn-cli config --always-on
+    protonvpn-cli config --help
 """
