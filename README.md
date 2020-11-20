@@ -11,7 +11,7 @@ python3-protonvpn-nm-lib, python3-dialog
 
 | **Command**                           | **Description**                                       |
 |:--------------------------------------|:------------------------------------------------------|
-|`protonvpn-cli login`                  | Login with ProtonVPN credentials.                     |
+|`protonvpn-cli login <pvpn_username>`  | Login with ProtonVPN credentials.                     |
 |`protonvpn-cli logout`                 | Logout from ProtonVPN.                                |
 |`protonvpn-cli connect, c`             | Display connnect dialog in terminal.                  |
 |`protonvpn-cli c [servername]`         | Connect to specified server.                          |
@@ -22,6 +22,7 @@ python3-protonvpn-nm-lib, python3-dialog
 |`protonvpn-cli c --sc`                 | Connect to fastest Secure Core server.                |
 |`protonvpn-cli disconnect, d`          | Disconnect from VPN session.                          |
 |`protonvpn-cli s, status`              | Display VPN session status.                           |
-|`protonvpn-cli configure`              | Display configurations menu.                          |
+|`protonvpn-cli config`                 | Change user settings menu.                            |
+|`protonvpn-cli ks, killswitch`         | Change kill switch settings.                          |
 |`protonvpn-cli --version`              | Display version.                                      |
 |`protonvpn-cli --help`                 | Show help message.                                    |
