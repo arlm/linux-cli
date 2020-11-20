@@ -5,14 +5,14 @@ from protonvpn_nm_lib.enums import ProtocolEnum
 from protonvpn_nm_lib.logger import logger
 from protonvpn_nm_lib.constants import APP_VERSION as lib_version
 from proton.constants import VERSION as proton_version
-from .constants import APP_VERSION, USAGE
+from .constants import APP_VERSION, MAIN_CLI_HELP, CONNECT_HELP
 from .cli_wrapper import CLIWrapper
 
 
 class NetworkManagerPrototypeCLI():
     def __init__(self):
         logger.info(
-            "ProtonVPN Official CLI v{} "
+            "ProtonVPN CLI v{} "
             "(protonvpn-nm-lib v{}; proton-client v{})".format(
                 APP_VERSION, lib_version, proton_version
             )
@@ -29,14 +29,14 @@ class NetworkManagerPrototypeCLI():
 
         if args.version:
             print(
-                "\nProtonVPN Official CLI v{} "
+                "\nProtonVPN CLI v{} "
                 "(protonvpn-nm-lib v{}; proton-client v{})".format(
                     APP_VERSION, lib_version, proton_version
                 )
             )
             parser.exit(1)
         elif not args.command or not hasattr(self, args.command) or args.help:
-            print(USAGE)
+            print(MAIN_CLI_HELP)
             parser.exit(1)
 
         logger.info("CLI command: {}".format(args))
@@ -50,7 +50,8 @@ class NetworkManagerPrototypeCLI():
     def connect(self):
         """Connect to ProtonVPN."""
         parser = argparse.ArgumentParser(
-            description="Connect to ProtonVPN", prog="protonvpn c"
+            description="Connect to ProtonVPN", prog="protonvpn-cli c",
+            add_help=False
         )
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
@@ -96,9 +97,15 @@ class NetworkManagerPrototypeCLI():
                 ProtocolEnum.UDP,
             ], metavar="", type=str.lower
         )
+        parser.add_argument(
+            "-h", "--help", required=False, action="store_true"
+        )
 
         args = parser.parse_args(sys.argv[2:])
         logger.info("Options: {}".format(args))
+        if args.help:
+            print(CONNECT_HELP)
+            parser.exit(1)
         self.cli_wrapper.connect(args)
 
     def d(self):

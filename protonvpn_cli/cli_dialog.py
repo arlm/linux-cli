@@ -5,184 +5,221 @@ import sys
 from dialog import Dialog
 from protonvpn_nm_lib import exceptions
 from protonvpn_nm_lib.constants import (CACHED_SERVERLIST, SUPPORTED_FEATURES,
-                                        ProtocolEnum)
+                                        ProtocolEnum, SERVER_TIERS)
 from protonvpn_nm_lib.logger import logger
 from protonvpn_nm_lib.services import capture_exception
+from protonvpn_nm_lib.country_codes import country_codes
 
 
-def dialog(server_manager, session):
-    """Connect to server with a dialog menu.
+class ProtonVPNDialog:
 
-    Args:
-        server_manager (ServerManager): instance of ServerManager
-        session (proton.api.Session): the current user session
-    Returns:
-        tuple: (servername, protocol)
-    """
-    # Check if dialog is installed
-    dialog_check = subprocess.run(['which', 'dialog'],
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
-    if not dialog_check.returncode == 0:
-        logger.error("[!] Dialog package not installed.")
-        print("'dialog' not found. "
-              "Please install dialog via your package manager.")
-        sys.exit(1)
+    def __init__(self, server_manager, usermanager):
+        self.server_manager = server_manager
+        self.usermanager = usermanager
+        self.user_tier = self.usermanager.tier
+        self.session = None
 
-    is_previous_cache_available = False
-    if os.path.isfile(CACHED_SERVERLIST):
-        is_previous_cache_available = True
+    def start(self, session):
+        """Connect to server with a dialog menu.
 
-    try:
-        server_manager.cache_servers(session)
-    except exceptions.APITimeoutError as e:
-        if not is_previous_cache_available:
-            logger.exception(
-                "[!] APITimeoutError: {}".format(e)
-            )
-            print("\n[!] Connection timeout, unable to reach API.")
-            sys.exit(1)
-    except exceptions.ProtonSessionWrapperError as e:
-        if not is_previous_cache_available:
-            print("\n[!] Unknown API error occured: {}".format(e.error))
-            sys.exit(1)
-    except Exception as e:
-        if not is_previous_cache_available:
-            capture_exception(e)
-            logger.exception(
-                "[!] Unknown error: {}".format(e)
-            )
-            print("[!] Unknown error occured: {}".format(e))
-    servers = server_manager.extract_server_list()
-    filtered_servers = server_manager.filter_servers(session, servers)
-    countries = generate_country_dict(server_manager, filtered_servers)
-
-    # Fist dialog
-    country = display_country(countries, server_manager, filtered_servers)
-    logger.info("Selected country: \"{}\"".format(country))
-    # Second dialog
-    server = display_servers(
-        countries, server_manager,
-        filtered_servers, country,
-    )
-    logger.info("Selected server: \"{}\"".format(server))
-    protocol = display_protocol()
-    logger.info("Selected protocol: \"{}\"".format(protocol))
-
-    os.system("clear")
-    return server, protocol
-
-
-def display_country(countries, server_manager, servers):
-    """Displays a dialog with a list of supported countries.
-
-    Args:
-        countries (dict): {country_code: servername}
-        server_manager (ServerManager): instance of ServerManager
-        servers (list): contains server information about each country
-    Returns:
-        string: country code (PT, SE, DK, etc)
-    """
-    choices = []
-
-    for country in sorted(countries.keys()):
-        country_features = []
-        for server in countries[country]:
-            feat = int(server_manager.extract_server_value(
-                server, "Features", servers)
-            )
-            if not SUPPORTED_FEATURES[feat] in country_features:
-                country_features.append(SUPPORTED_FEATURES[feat])
-        choices.append((country, " | ".join(sorted(country_features))))
-
-    return display_dialog("Choose a country:", choices)
-
-
-def display_servers(countries, server_manager, servers, country):
-    """Displays a dialog with a list of servers.
-
-    Args:
-        countries (dict): {country_code: servername}
-        server_manager (ServerManager): instance of ServerManager
-        servers (list): contains server information about each country
-        country (string): country code (PT, SE, DK, etc)
-    Returns:
-        string: servername (PT#8, SE#5, DK#10, etc)
-    """
-    server_tiers = {0: "F", 1: "B", 2: "P", 3: "PM"}
-    choices = []
-
-    # lambda sorts servers by Load instead of name
-    country_servers = sorted(
-        countries[country],
-        key=lambda s: server_manager.extract_server_value(
-            s, "Load", servers
+        Args:
+            server_manager (ServerManager): instance of ServerManager
+            session (proton.api.Session): the current user session
+        Returns:
+            tuple: (servername, protocol)
+        """
+        # Check if dialog is installed
+        dialog_check = subprocess.run(
+            ['which', 'dialog'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
         )
-    )
-
-    for servername in country_servers:
-        load = str(
-            server_manager.extract_server_value(servername, "Load", servers)
-        ).rjust(3, " ")
-
-        feature = SUPPORTED_FEATURES[
-            server_manager.extract_server_value(
-                servername, 'Features', servers
+        if not dialog_check.returncode == 0:
+            logger.error("[!] Dialog package not installed.")
+            print(
+                "'dialog' not found. "
+                "Please install dialog via your package manager."
             )
-        ]
+            sys.exit(1)
 
-        tier = server_tiers[
-            server_manager.extract_server_value(servername, "Tier", servers)
-        ]
+        self.session = session
 
-        choices.append(
-            (servername, "Load: {0}% | {1} | {2}".format(load, tier, feature))
+        is_previous_cache_available = False
+        if os.path.isfile(CACHED_SERVERLIST):
+            is_previous_cache_available = True
+
+        try:
+            self.server_manager.cache_servers(self.session)
+        except exceptions.APITimeoutError as e:
+            if not is_previous_cache_available:
+                logger.exception("[!] APITimeoutError: {}".format(e))
+                print("\n[!] Connection timeout, unable to reach API.")
+                sys.exit(1)
+        except exceptions.ProtonSessionWrapperError as e:
+            if not is_previous_cache_available:
+                logger.exception("[!] ProtonSessionWrapperError: {}".format(e))
+                print("\n[!] Unknown API error occured: {}".format(e.error))
+                sys.exit(1)
+        except Exception as e:
+            if not is_previous_cache_available:
+                capture_exception(e)
+                logger.exception(
+                    "[!] Unknown error: {}".format(e)
+                )
+                print("\n[!] Unknown error occured: {}".format(e))
+                sys.exit(1)
+
+        self.servers = self.server_manager.extract_server_list()
+        self.filtered_servers = self.server_manager.filter_servers(
+            self.session, self.servers
+        )
+        self.countries = self.generate_country_dict(
+            self.server_manager, self.filtered_servers
         )
 
-    return display_dialog("Choose the server to connect:", choices)
+        # Fist dialog
+        self.country = self.display_country()
+        logger.info("Selected country: \"{}\"".format(self.country))
+        # Second dialog
+        server = self.display_servers()
+        logger.info("Selected server: \"{}\"".format(server))
+        protocol = self.display_protocol()
+        logger.info("Selected protocol: \"{}\"".format(protocol))
 
-
-def display_protocol():
-    """Displays a dialog with a list of protocols.
-
-    Returns:
-        string: protocol
-    """
-    return display_dialog(
-        "Choose a protocol:", [
-            (ProtocolEnum.UDP, "Better Speed"),
-            (ProtocolEnum.TCP, "Better Reliability")
-        ]
-    )
-
-
-def display_dialog(headline, choices, stop=False):
-    """Show dialog and process response."""
-    d = Dialog(dialog="dialog")
-
-    code, tag = d.menu(headline, title="ProtonVPN-CLI", choices=choices)
-    if code == "ok":
-        return tag
-    else:
         os.system("clear")
-        print("Canceled.")
-        sys.exit(1)
+        return server, protocol
 
+    def display_country(self):
+        """Displays a dialog with a list of supported countries.
 
-def generate_country_dict(server_manager, servers):
-    """Generate country:servername
+        Args:
+            countries (dict): {country_code: servername}
+            server_manager (ServerManager): instance of ServerManager
+            servers (list): contains server information about each country
+        Returns:
+            string: country code (PT, SE, DK, etc)
+        """
+        choices = []
 
-    Args:
-        server_manager (ServerManager): instance of ServerManager
-        servers (list): contains server information about each country
-    Returns:
-        dict: {country_code: servername} ie {PT: [PT#5, PT#8]}
-    """
-    countries = {}
-    for server in servers:
-        country = server_manager.extract_country_name(server["ExitCountry"])
-        if country not in countries.keys():
-            countries[country] = []
-        countries[country].append(server["Name"])
+        for country in sorted(self.countries.keys()):
+            country_code = [
+                cc
+                for cc, _country
+                in country_codes.items()
+                if _country == country
+            ].pop()
+            choices.append((country, "{}".format(country_code)))
 
-    return countries
+        return self.display_dialog("Choose a country:", choices)
+
+    def sort_servers(self):
+        country_servers = self.countries[self.country]
+        other_servers = {}
+        match_tier_servers = {}
+        self.user_tier = 3
+        for server in country_servers:
+            tier = self.server_manager.extract_server_value(
+                server, "Tier", self.servers
+            )
+            if tier == self.user_tier:
+                match_tier_servers[server] = tier
+                continue
+            elif (tier > self.user_tier or tier < self.user_tier) and not tier == 3:
+                other_servers[server] = tier
+
+        sorted_dict = dict(
+            sorted(
+                other_servers.items(),
+                key=lambda s: s[1],
+                reverse=True
+            )
+        )
+        match_tier_servers.update(sorted_dict)
+        return [servername for servername, tier in match_tier_servers.items()]
+
+    def display_servers(self):
+        """Displays a dialog with a list of servers.
+
+        Args:
+            countries (dict): {country_code: servername}
+            server_manager (ServerManager): instance of ServerManager
+            servers (list): contains server information about each country
+            country (string): country code (PT, SE, DK, etc)
+        Returns:
+            string: servername (PT#8, SE#5, DK#10, etc)
+        """
+        choices = []
+
+        country_servers = self.sort_servers()
+
+        for servername in country_servers:
+            load = str(
+                self.server_manager.extract_server_value(
+                    servername, "Load", self.servers
+                )
+            ).rjust(3, " ")
+
+            feature = SUPPORTED_FEATURES[
+                self.server_manager.extract_server_value(
+                    servername, 'Features', self.servers
+                )
+            ]
+
+            tier = SERVER_TIERS[
+                self.server_manager.extract_server_value(
+                    servername, "Tier", self.servers
+                )
+            ]
+
+            choices.append(
+                (
+                    servername, "Load: {0}% | {1} | {2}".format(
+                        load, tier, feature
+                    )
+                )
+            )
+
+        return self.display_dialog("Choose the server to connect:", choices)
+
+    def display_protocol(self):
+        """Displays a dialog with a list of protocols.
+
+        Returns:
+            string: protocol
+        """
+        return self.display_dialog(
+            "Choose a protocol:", [
+                (ProtocolEnum.UDP, "Better Speed"),
+                (ProtocolEnum.TCP, "Better Reliability")
+            ]
+        )
+
+    def display_dialog(self, headline, choices, stop=False):
+        """Show dialog and process response."""
+        d = Dialog(dialog="dialog")
+
+        code, tag = d.menu(headline, title="ProtonVPN-CLI", choices=choices)
+        if code == "ok":
+            return tag
+        else:
+            os.system("clear")
+            print("Canceled.")
+            sys.exit(1)
+
+    def generate_country_dict(self, server_manager, servers):
+        """Generate country:servername
+
+        Args:
+            server_manager (ServerManager): instance of ServerManager
+            servers (list): contains server information about each country
+        Returns:
+            dict: {country_code: servername} ie {PT: [PT#5, PT#8]}
+        """
+        countries = {}
+        for server in servers:
+            country = server_manager.extract_country_name(server["ExitCountry"])
+            if country not in countries.keys():
+                countries[country] = []
+            countries[country].append(server["Name"])
+
+        return countries

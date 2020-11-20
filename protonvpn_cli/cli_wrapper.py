@@ -11,10 +11,13 @@ from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 from protonvpn_nm_lib import exceptions
 from protonvpn_nm_lib.constants import (FLAT_SUPPORTED_PROTOCOLS,
+                                        KILLSWITCH_STATUS_TEXT, SERVER_TIERS,
                                         SUPPORTED_FEATURES,
+                                        SUPPORTED_PROTOCOLS,
                                         VIRTUAL_DEVICE_NAME)
-from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
+from protonvpn_nm_lib.enums import (ConnectionMetadataEnum, FeatureEnum,
                                     KillswitchStatusEnum, ProtocolEnum,
+                                    ProtocolImplementationEnum,
                                     UserSettingEnum, UserSettingStatusEnum)
 from protonvpn_nm_lib.logger import logger
 from protonvpn_nm_lib.services import capture_exception
@@ -24,13 +27,13 @@ from protonvpn_nm_lib.services.dbus_get_wrapper import DbusGetWrapper
 from protonvpn_nm_lib.services.ipv6_leak_protection_manager import \
     IPv6LeakProtectionManager
 from protonvpn_nm_lib.services.killswitch_manager import KillSwitchManager
+from protonvpn_nm_lib.services.reconnector_manager import ReconnectorManager
 from protonvpn_nm_lib.services.server_manager import ServerManager
 from protonvpn_nm_lib.services.user_configuration_manager import \
     UserConfigurationManager
 from protonvpn_nm_lib.services.user_manager import UserManager
-from protonvpn_nm_lib.services.reconnector_manager import ReconnectorManager
 
-from .cli_dialog import dialog  # noqa
+from .cli_dialog import ProtonVPNDialog  # noqa
 
 
 class CLIWrapper():
@@ -42,6 +45,7 @@ class CLIWrapper():
     user_manager = UserManager()
     server_manager = ServerManager(CertificateManager(), user_manager)
     ipv6_lp_manager = IPv6LeakProtectionManager()
+    protonvpn_dialog = ProtonVPNDialog(server_manager, user_manager)
 
     def connect(self, args):
         """Proxymethod to connect to ProtonVPN."""
@@ -214,41 +218,50 @@ class CLIWrapper():
             print("[!] No active ProtonVPN connection.")
             sys.exit()
 
-        country, load, features = self.extract_server_info(
+        country, load, features, tier = self.extract_server_info(
             conn_status[ConnectionMetadataEnum.SERVER]
         )
-        ks_configuration = "Disabled"
-        if self.user_conf_manager.killswitch == KillswitchStatusEnum.HARD:
-            ks_configuration = "Hard"
-        elif self.user_conf_manager.killswitch == KillswitchStatusEnum.SOFT:
-            ks_configuration = "Soft"
 
         self.ks_manager.update_connection_status()
-        ks_status = "(Running)"
-        if not self.ks_manager.interface_state_tracker[self.ks_manager.ks_conn_name]["is_running"]: # noqa
-            ks_status = "(Not running)"
+
+        ks_status = ""
+        if (
+            not self.ks_manager.interface_state_tracker[self.ks_manager.ks_conn_name]["is_running"] # noqa
+            and self.user_conf_manager.killswitch != KillswitchStatusEnum.DISABLED # noqa
+        ):
+            ks_status = "(Inactive, restart connection to activate KS)"
+
+        if len(features) == 1 and not len(features[0]):
+            features = ""
+        else:
+            features = "Server Features: " + ", ".join(features) + "\n"
+
+        protocol = conn_status[ConnectionMetadataEnum.PROTOCOL]
+        if protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]:
+            protocol = "OpenVPN (" + protocol.upper() + ")\n"
 
         status_to_print = dedent("""
             ProtonVPN Connection Status
             ---------------------------
-            Country: {country}
-            Server: {server}
-            Load: {load}%
-            Protocol: {proto}
-            Feature(s): {features}
-            Killswitch Status: {killswitch_status}{ks_interface}
-            Connection time: {time}\
+            Country: \t {country}
+            Server: \t {server}
+            Server Load: \t {load}%
+            Server Plan: \t {server_tier}
+            {features}Protocol: \t {proto}
+            Killswitch: \t {killswitch_config} {killswitch_status}
+            Connection time: {time}
         """).format(
             country=country,
             server=conn_status[ConnectionMetadataEnum.SERVER],
-            proto=conn_status[ConnectionMetadataEnum.PROTOCOL].upper(),
+            proto=protocol,
             time=self.convert_time(
                 conn_status[ConnectionMetadataEnum.CONNECTED_TIME]
             ),
             load=load,
-            killswitch_status=ks_configuration,
-            ks_interface=ks_status,
-            features=", ".join(features)
+            server_tier=SERVER_TIERS[int(tier)],
+            killswitch_config=KILLSWITCH_STATUS_TEXT[self.user_conf_manager.killswitch], # noqa
+            killswitch_status=ks_status,
+            features=features
         )
         print(status_to_print)
         sys.exit()
@@ -544,6 +557,11 @@ class CLIWrapper():
                     servername, "Features", servers
                 )
             ]
+            tier = [
+                self.server_manager.extract_server_value(
+                    servername, "Tier", servers
+                )
+            ].pop()
         except IndexError as e:
             logger.exception("[!] IndexError: {}".format(e))
             print(
@@ -563,7 +581,7 @@ class CLIWrapper():
             if feature in SUPPORTED_FEATURES:
                 features_list.append(SUPPORTED_FEATURES[feature])
 
-        return country, load, features_list
+        return country, load, features_list, tier
 
     def convert_time(self, connected_time):
         """Convert time from epoch to 24h.
@@ -686,9 +704,8 @@ class CLIWrapper():
 
         try:
             if is_dialog:
-                servername, protocol = dialog(
-                    self.server_manager,
-                    self.session,
+                servername, protocol = self.protonvpn_dialog.start(
+                    self.session
                 )
 
                 return self.server_manager.direct(
@@ -698,14 +715,9 @@ class CLIWrapper():
             return cli_commands[command[0]](
                 self.session, protocol, command
             )
-        except KeyError as e:
-            print("\nKeyError: {}".format(e))
-            sys.exit(1)
-        except TypeError as e:
-            print("\nTypeError: {}".format(e))
-            sys.exit(1)
-        except ValueError as e:
-            print("\nValueError: {}".format(e))
+        except (KeyError, TypeError, ValueError) as e:
+            logger.exception("[!] Error: {}".format(e))
+            print("\n[!] Error: {}".format(e))
             sys.exit(1)
         except exceptions.EmptyServerListError as e:
             print(
