@@ -127,7 +127,7 @@ class NetworkManagerPrototypeCLI():
         parser.add_argument(
             "username",
             help="ProtonVPN username.",
-            nargs=1
+            nargs="?",
         )
         parser.add_argument(
             "-h", "--help", required=False, action="store_true"

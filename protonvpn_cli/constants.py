@@ -10,6 +10,8 @@ commands:
     c, connect          Connect to ProtonVPN.
     d, disconnect       Disconnect from ProtonVPN.
     s, status           Show connection status.
+    config              Configure user settings.
+    ks, killswitch      Configure killswitch settings.
 
 optional arguments:
     -h, --help          Display help message.
@@ -17,18 +19,20 @@ optional arguments:
 
 examples:
     protonvpn-cli login
+    protonvpn-cli login --help
     protonvpn-cli logout
     protonvpn-cli (c | connect)
+    protonvpn-cli (c | connect) --help
     protonvpn-cli (d | disconnect)
     protonvpn-cli (s | status)
     protonvpn-cli config
+    protonvpn-cli config --help
     protonvpn-cli (-h | --help)
     protonvpn-cli (-v | --version)
 """.format(APP_VERSION)
 
 LOGIN_HELP = """
 usage:  protonvpn-cli login [-h | --help] <pvpn_username>
-
 
 positional arguments:
     <pvpn_username> ProtonVPN Username
@@ -38,7 +42,7 @@ optional arguments:
 
 examples:
     protonvpn-cli login pvpn_username
-    protonvpn-cli login --help pvpn_username
+    protonvpn-cli login --help
 """
 
 CONNECT_HELP = """
@@ -69,11 +73,11 @@ examples:
     protonvpn-cli connect --tor
     protonvpn-cli c --random --protocol udp
     protonvpn-cli c --help
-"""
+""" # noqa
 
 CONFIG_HELP = """
 usage:  protonvpn-cli config [-h | --help]
-        [--dns <command> [--ip <IP> | --list] | [-p | --protocol] <protocol>]
+        [--dns <command> [--ip <IP> | --list] | [-p | --protocol] <protocol> | [-d | --default]]
 
 optional arguments:
     --dns <command> Change DNS configurations
@@ -81,6 +85,7 @@ optional arguments:
     --ip            Custom DNS IP (max 3 IPs).
     --list          List custom IPs.
     -p, --protocol  Change default protocol.
+    -d, --default   Reset to default configurations.
     -h, --help      Display help message.
 
 examples:
@@ -88,9 +93,10 @@ examples:
     protonvpn-cli config --dns custom --ip 192.168.0.1
     protonvpn-cli config --dns custom --list
     protonvpn-cli config -p tcp
-    protonvpn-cli config -protocol udp
+    protonvpn-cli config --protocol udp
+    protonvpn-cli config (-d | --default)
     protonvpn-cli config --help
-"""
+""" # noqa
 
 KS_HELP = """
 usage:  protonvpn-cli (ks | killswitch) [-h | --help]
@@ -107,8 +113,8 @@ optional arguments:
     -h, --help      Display help message.
 
 examples:
-    protonvpn-cli config --on
-    protonvpn-cli config --off
-    protonvpn-cli config --always-on
-    protonvpn-cli config --help
+    protonvpn-cli (ks | killswitch) --on
+    protonvpn-cli (ks | killswitch) --off
+    protonvpn-cli (ks | killswitch) --always-on
+    protonvpn-cli (ks | killswitch) --help
 """
