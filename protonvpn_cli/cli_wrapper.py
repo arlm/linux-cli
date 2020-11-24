@@ -36,6 +36,18 @@ from .cli_dialog import ProtonVPNDialog  # noqa
 
 
 class CLIWrapper():
+    logger.info(
+        "\n"
+        + "---------------------"
+        + "----------------"
+        + "------------\n\n"
+        + "-----------\t"
+        + "Initialized protonvpn-cli"
+        + "\t-----------\n\n"
+        + "---------------------"
+        + "----------------"
+        + "------------"
+    )
     time_sleep_value = 1
     reconector_manager = ReconnectorManager()
     user_conf_manager = UserConfigurationManager()
