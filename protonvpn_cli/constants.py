@@ -1,38 +1,122 @@
-APP_VERSION = "0.0.1"
-USAGE = """
-ProtonVPN CLI
-Usage:
+APP_VERSION = "3.0.0"
+MAIN_CLI_HELP = """
+ProtonVPN CLI v{}
+
+For bugs and errors, please contact linux-beta@protonvpn.com
+
+usage:  protonvpn-cli [--version | --help] <command>
+
+commands:
+    login               Login with ProtonVPN credentials.
+    logout              Disconnect, remove ProtonVPN connection and logout.
+    c, connect          Connect to ProtonVPN.
+    d, disconnect       Disconnect from ProtonVPN.
+    s, status           Show connection status.
+    config              Configure user settings.
+    ks, killswitch      Configure killswitch settings.
+
+optional arguments:
+    -h, --help          Display help message.
+    -v, --version       Display versions.
+
+examples:
     protonvpn-cli login
+    protonvpn-cli login --help
     protonvpn-cli logout
-    protonvpn-cli (c | connect) [<servername>] [-p <protocol>]
-    protonvpn-cli (c | connect) [-f | --fastest] [-p <protocol>]
-    protonvpn-cli (c | connect) [--cc <code>] [-p <protocol>]
-    protonvpn-cli (c | connect) [--sc] [-p <protocol>]
-    protonvpn-cli (c | connect) [--p2p] [-p <protocol>]
-    protonvpn-cli (c | connect) [--tor] [-p <protocol>]
-    protonvpn-cli (c | connect) [-r | --random] [-p <protocol>]
+    protonvpn-cli (c | connect)
+    protonvpn-cli (c | connect) --help
     protonvpn-cli (d | disconnect)
     protonvpn-cli (s | status)
-    protonvpn-cli configure
+    protonvpn-cli config
+    protonvpn-cli config --help
     protonvpn-cli (-h | --help)
     protonvpn-cli (-v | --version)
-Options:
-    -f, --fastest       Select fastest ProtonVPN server.
-    -r, --random        Select a random ProtonVPN server.
-    --cc CODE           Determine country for fastest connect.
-    --sc                Connect to fastest Secure-Core server.
-    --p2p               Connect to fastest torrent server.
-    --tor               Connect to fastest Tor server.
-    -p PROTOCOL         Determine protocol (UDP or TCP).
-    -h, --help          Show this help message.
-    -v, --version       Display version.
-Commands:
-    login               Login ProtonVPN.
-    logout              Logout ProtonVPN.
-    configure           Configurations menu.
-    c, connect          Connect to a ProtonVPN server.
-    d, disconnect       Disconnect the current session.
-    s, status           Show connection status.
-Arguments:
-    <servername>        Servername (CH#4, CA-CH#1, CH#18-TOR).
+""".format(APP_VERSION)
+
+LOGIN_HELP = """
+usage:  protonvpn-cli login [-h | --help] <pvpn_username>
+
+positional arguments:
+    <pvpn_username> ProtonVPN Username
+
+optional arguments:
+    -h, --help      Display help message.
+
+examples:
+    protonvpn-cli login pvpn_username
+    protonvpn-cli login --help
+"""
+
+CONNECT_HELP = """
+usage:  protonvpn-cli (c | connect) [-h | --help] [<servername>]
+        [[-f | --fastest] | [-r | --random] | [--cc] | [--sc] | [--p2p] | [--tor]]
+        [[-p | --protocol] <protocol>]
+
+positional arguments:
+    <servername>    Directly connecto to
+                    specified server (ie: CH#4, CH-US-1, HK5-Tor).
+
+optional arguments:
+    -f, --fastest   Connect to the fastest ProtonVPN server.
+    -r, --random    Connect to a random ProtonVPN server.
+    --cc            Connect to the specified country code (SE, PT, BR, AR).
+    --sc            Connect to the fastest Secure-Core server.
+    --p2p           Connect to the fastest P2P server.
+    --tor           Connect to the fastest Tor server.
+    -p , --protocol Connect via specified protocol.
+    -h, --help      Display help message.
+
+examples:
+    protonvpn-cli connect PT#8 -p tcp
+    protonvpn-cli connect --fastest --protocol udp
+    protonvpn-cli c --cc PT -p tcp
+    protonvpn-cli c --sc
+    protonvpn-cli c --p2p -p tcp
+    protonvpn-cli connect --tor
+    protonvpn-cli c --random --protocol udp
+    protonvpn-cli c --help
+""" # noqa
+
+CONFIG_HELP = """
+usage:  protonvpn-cli config [-h | --help]
+        [--dns <command> [--ip <IP> | --list] | [-p | --protocol] <protocol> | [-d | --default]]
+
+optional arguments:
+    --dns <command> Change DNS configurations
+                    (custom | automatic).
+    --ip            Custom DNS IP (max 3 IPs).
+    --list          List custom IPs.
+    -p, --protocol  Change default protocol.
+    -d, --default   Reset to default configurations.
+    -h, --help      Display help message.
+
+examples:
+    protonvpn-cli config --dns automatic
+    protonvpn-cli config --dns custom --ip 192.168.0.1
+    protonvpn-cli config --dns custom --list
+    protonvpn-cli config -p tcp
+    protonvpn-cli config --protocol udp
+    protonvpn-cli config (-d | --default)
+    protonvpn-cli config --help
+""" # noqa
+
+KS_HELP = """
+usage:  protonvpn-cli (ks | killswitch) [-h | --help]
+        [--on | --off | --always-on]
+
+optional arguments:
+    --on            Start kill switch upon connecting to VPN
+                    and stop it when disconnecting from VPN.
+    --off           Stop and remove kill switch.
+    --always-on     Start kill switch regardless of VPN connection.
+                    Warning: This takes effect immediatly and you
+                    might end up without internet connection.
+                    Either connect to VPN or turn the ks off.
+    -h, --help      Display help message.
+
+examples:
+    protonvpn-cli (ks | killswitch) --on
+    protonvpn-cli (ks | killswitch) --off
+    protonvpn-cli (ks | killswitch) --always-on
+    protonvpn-cli (ks | killswitch) --help
 """
