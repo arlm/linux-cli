@@ -452,6 +452,10 @@ class CLIWrapper():
         print("\nConfigurations were successfully restored back to defaults.")
         sys.exit()
 
+    def reconnect(self):
+        print("\nReconnect to previously connected server")
+        sys.exit()
+
     def check_internet_conn(self):
         try:
             self.connection_manager.check_internet_connectivity(
