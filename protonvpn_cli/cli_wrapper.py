@@ -115,7 +115,7 @@ class CLIWrapper():
         MonitorVPNState(
             VIRTUAL_DEVICE_NAME, loop, self.ks_manager,
             self.user_conf_manager, self.connection_manager,
-            self.reconector_manager
+            self.reconector_manager, self.session
         )
         loop.run()
         sys.exit(exit_type)
@@ -803,7 +803,8 @@ class MonitorVPNState(DbusGetWrapper):
     def __init__(
         self, virtual_device_name, loop,
         ks_manager, user_conf_manager,
-        connection_manager, reconector_manager
+        connection_manager, reconector_manager,
+        session
     ):
         self.max_attempts = 5
         self.delay = 5000
@@ -814,6 +815,7 @@ class MonitorVPNState(DbusGetWrapper):
         self.connection_manager = connection_manager
         self.reconector_manager = reconector_manager
         self.ks_manager = ks_manager
+        self.session = session
         self.bus = dbus.SystemBus()
         self.vpn_check()
 
@@ -845,7 +847,7 @@ class MonitorVPNState(DbusGetWrapper):
                 self.ks_manager.manage("soft_connection")
 
             self.reconector_manager.start_daemon_reconnector()
-
+            self.session.cache_servers()
             logger.info(msg)
             print("\n{}".format(msg))
             self.loop.quit()
