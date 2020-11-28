@@ -75,6 +75,17 @@ class CLIWrapper():
         protocol = self.determine_protocol(args)
         self.session = self.get_existing_session(exit_type)
 
+        if (
+            args.servername
+            and not self.server_manager.is_servername_valid(args.servername)
+        ):
+            print(
+                "\nIllegalServername: Invalid servername {}".format(
+                    args.servername
+                )
+            )
+            sys.exit(1)
+
         self.remove_existing_connection()
 
         self.check_internet_conn()
@@ -134,18 +145,18 @@ class CLIWrapper():
                 self.reconector_manager
             )
         except exceptions.ConnectionNotFound as e:
-            print("[!] Unable to disconnect: {}".format(e))
+            print("Unable to disconnect: {}".format(e))
         except (
             exceptions.RemoveConnectionFinishError,
             exceptions.StopConnectionFinishError
         ) as e:
-            print("[!] Unable to disconnect: {}".format(e))
+            print("Unable to disconnect: {}".format(e))
         except Exception as e:
             capture_exception(e)
             logger.exception(
                 "[!] Unknown error: {}".format(e)
             )
-            print("[!] Unknown error occured: {}".format(e))
+            print("Unknown error occured: {}".format(e))
         else:
             exit_type = 1
             print("\nSuccessfully disconnected from ProtonVPN!")
@@ -204,17 +215,17 @@ class CLIWrapper():
             _pass_check.append(exceptions.StoredSessionNotFound)
             self.logout(session, _pass_check, _removed)
         except exceptions.KeyringDataNotFound:
-            print("[!] Unable to logout. No session was found.")
+            print("Unable to logout. No session was found.")
             sys.exit(exit_type)
         except exceptions.AccessKeyringError:
-            print("[!] Unable to logout. Could not access keyring.")
+            print("Unable to logout. Could not access keyring.")
             sys.exit(exit_type)
         except Exception as e:
             capture_exception(e)
             logger.exception(
                 "[!] Unknown error: {}".format(e)
             )
-            print("[!] Unknown error occured: {}.".format(e))
+            print("Unknown error occured: {}.".format(e))
             sys.exit(exit_type)
 
         logger.info("Successful logout.")
@@ -309,7 +320,7 @@ class CLIWrapper():
         except ValueError:
             logger.error("Select option is incorrect.")
             print(
-                "\n[!] Selected option \"{}\" is either incorrect ".format(
+                "\nSelected option \"{}\" is either incorrect ".format(
                     protocol_value
                 ) + "or protocol is (yet) not supported"
             )
@@ -365,7 +376,7 @@ class CLIWrapper():
             if len(custom_dns_ips) > 3:
                 logger.error("More then 3 custom DNS IPs were provided")
                 print(
-                    "\n[!] You provided more then 3 DNS servers. "
+                    "\nYou provided more then 3 DNS servers. "
                     "Please enter up to 3 DNS server IPs."
                 )
                 sys.exit(1)
@@ -373,7 +384,7 @@ class CLIWrapper():
                 if not self.user_conf_manager.is_valid_ip(dns):
                     logger.error("{} is an invalid IP".format(dns))
                     print(
-                        "\n[!] {0} is invalid. "
+                        "\n{0} is invalid. "
                         "Please provide a valid IP DNS server.".format(dns)
                     )
                     sys.exit(1)
@@ -448,13 +459,13 @@ class CLIWrapper():
             )
         except exceptions.InternetConnectionError:
             print(
-                "\n[!] No Internet connection found. "
+                "\nNo Internet connection found. "
                 "Please make sure you are connected and retry."
             )
             sys.exit(1)
         except exceptions.UnreacheableAPIError:
             print(
-                "\n[!] Couldn't reach Proton API."
+                "\nCouldn't reach Proton API."
                 "This might happen due to connection issues or network blocks."
             )
             sys.exit(1)
@@ -494,7 +505,7 @@ class CLIWrapper():
         except IndexError as e:
             logger.exception("[!] IndexError: {}".format(e))
             print(
-                "\n[!] The server you have connected to is not available. "
+                "\nThe server you have connected to is not available. "
                 "If you are currently connected to the server, "
                 "you will be soon disconnected. "
                 "Please connect to another server."
@@ -502,7 +513,7 @@ class CLIWrapper():
             sys.exit(1)
         except Exception as e:
             logger.exception("[!] Unknown error: {}".format(e))
-            print("\n[!] Unknown error: {}".format(e))
+            print("\nUnknown error: {}".format(e))
             sys.exit(1)
 
         features_list = []
@@ -547,13 +558,13 @@ class CLIWrapper():
             )
         except exceptions.ImportConnectionError as e:
             logger.exception("[!] ImportConnectionError: {}".format(e))
-            print("[!] An error occured upon importing connection: ", e)
+            print("An error occured upon importing connection: ", e)
         except Exception as e:
             capture_exception(e)
             logger.exception(
                 "[!] Unknown error: {}".format(e)
             )
-            print("[!] Unknown error: {}".format(e))
+            print("Unknown error: {}".format(e))
             sys.exit(exit_type)
         else:
             exit_type = 0
@@ -577,7 +588,7 @@ class CLIWrapper():
             )
         except exceptions.JSONSDataEmptyError:
             print(
-                "\n[!] The stored session might be corrupted. "
+                "\nThe stored session might be corrupted. "
                 + "Please, try to login again."
             )
             sys.exit(exit_type)
@@ -590,11 +601,11 @@ class CLIWrapper():
             logger.exception(
                 "[!] APITimeoutError: {}".format(e)
             )
-            print("\n[!] Connection timeout, unable to reach API.")
+            print("\nConnection timeout, unable to reach API.")
             sys.exit(1)
         except exceptions.API10013Error:
             print(
-                "\n[!] Current session is invalid, "
+                "\nCurrent session is invalid, "
                 "please logout and login again."
             )
             sys.exit(1)
@@ -602,14 +613,14 @@ class CLIWrapper():
             logger.exception(
                 "[!] Unknown ProtonSessionWrapperError: {}".format(e)
             )
-            print("\n[!] Unknown API error occured: {}".format(e))
+            print("\nUnknown API error occured: {}".format(e))
             sys.exit(1)
         except Exception as e:
             capture_exception(e)
             logger.exception(
                 "[!] Unknown error: {}".format(e)
             )
-            print("\n[!] Unknown error occured: {}.".format(e))
+            print("\nUnknown error occured: {}.".format(e))
             sys.exit(exit_type)
 
         if error:
@@ -646,30 +657,30 @@ class CLIWrapper():
             )
         except (KeyError, TypeError, ValueError) as e:
             logger.exception("[!] Error: {}".format(e))
-            print("\n[!] Error: {}".format(e))
+            print("\nError: {}".format(e))
             sys.exit(1)
         except exceptions.EmptyServerListError as e:
             print(
-                "\n[!] {} This could mean that the ".format(e)
+                "\n{} This could mean that the ".format(e)
                 + "server(s) are under maintenance or "
                 + "inaccessible with your plan."
             )
             sys.exit(1)
         except exceptions.IllegalServername as e:
-            print("\n[!] IllegalServername: {}".format(e))
+            print("\nIllegalServername: {}".format(e))
             sys.exit(1)
         except exceptions.CacheLogicalServersError as e:
-            print("\n[!] CacheLogicalServersError: {}".format(e))
+            print("\nCacheLogicalServersError: {}".format(e))
             sys.exit(1)
         except exceptions.MissingCacheError as e:
-            print("\n[!] MissingCacheError: {}".format(e))
+            print("\nMissingCacheError: {}".format(e))
             sys.exit(1)
         except exceptions.API403Error as e:
-            print("\n[!] API403Error: {}".format(e.error))
+            print("\nAPI403Error: {}".format(e.error))
             handle_error = 403
         except exceptions.API10013Error:
             print(
-                "\n[!] Current session is invalid, "
+                "\nCurrent session is invalid, "
                 "please logout and login again."
             )
             sys.exit(1)
@@ -677,17 +688,17 @@ class CLIWrapper():
             logger.exception(
                 "[!] APITimeoutError: {}".format(e)
             )
-            print("\n[!] Connection timeout, unable to reach API.")
+            print("\nConnection timeout, unable to reach API.")
             sys.exit(1)
         except exceptions.ProtonSessionWrapperError as e:
-            print("\n[!] Unknown API error occured: {}".format(e.error))
+            print("\nUnknown API error occured: {}".format(e.error))
             sys.exit(1)
         except Exception as e:
             capture_exception(e)
             logger.exception(
                 "[!] Unknown error: {}".format(e)
             )
-            print("\n[!] Unknown error occured: {}.".format(e))
+            print("\nUnknown error occured: {}.".format(e))
             sys.exit(1)
 
         if not handle_error:
@@ -719,7 +730,7 @@ class CLIWrapper():
             session = self.user_manager.load_session()
         except exceptions.JSONSDataEmptyError:
             print(
-                "[!] The stored session might be corrupted. "
+                "The stored session might be corrupted. "
                 + "Please, try to login again."
             )
             if is_connecting:
@@ -729,11 +740,11 @@ class CLIWrapper():
             exceptions.JSONDataNoneError
         ):
             if is_connecting:
-                print("\n[!] There is no stored session. Please, login first.")
+                print("\nThere is no stored session. Please, login first.")
                 sys.exit(exit_type)
         except exceptions.AccessKeyringError:
             print(
-                "[!] Unable to load session. Could not access keyring."
+                "Unable to load session. Could not access keyring."
             )
             if is_connecting:
                 sys.exit(exit_type)
@@ -742,7 +753,7 @@ class CLIWrapper():
             logger.exception(
                 "[!] Unknown error: {}".format(e)
             )
-            print("[!] Unknown error occured: {}.".format(e))
+            print("Unknown error occured: {}.".format(e))
             if is_connecting:
                 sys.exit(exit_type)
         else:
@@ -760,24 +771,24 @@ class CLIWrapper():
         try:
             self.user_manager.login(protonvpn_username, protonvpn_password)
         except (TypeError, ValueError) as e:
-            print("[!] Unable to authenticate: {}".format(e))
+            print("Unable to authenticate: {}".format(e))
         except (exceptions.API8002Error, exceptions.API85032Error) as e:
-            print("[!] {}".format(e))
+            print("{}".format(e))
         except exceptions.APITimeoutError:
-            print("[!] Connection timeout, unable to reach API.")
+            print("Connection timeout, unable to reach API.")
         except (exceptions.UnhandledAPIError, exceptions.APIError) as e:
-            print("[!] Unhandled API error occured: {}".format(e))
+            print("Unhandled API error occured: {}".format(e))
         except exceptions.ProtonSessionWrapperError as e:
             logger.exception(
                 "[!] ProtonSessionWrapperError: {}".format(e)
             )
-            print("[!] Unknown API error occured: {}".format(e))
+            print("Unknown API error occured: {}".format(e))
         except Exception as e:
             capture_exception(e)
             logger.exception(
                 "[!] Unknown error: {}".format(e)
             )
-            print("[!] Unknown error occured: {}".format(e))
+            print("Unknown error occured: {}".format(e))
         else:
             exit_type = 0
             logger.info("Successful login.")
