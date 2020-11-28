@@ -1,3 +1,10 @@
+protonvpn-cli (3.1.0-1) UNRELEASED; urgency=low
+
+  * Add support for protonvpn-nm-lib v0.2.0-1
+  * Cache servers after connecting to vpn if previous cache failed
+
+ -- Proton Technologies AG <opensource@proton.me>  Satd, 28 Nov 2020 12:15:09 +0000
+
 protonvpn-cli (3.0.0-10) UNRELEASED; urgency=low
 
   * Add support for protonvpn-nm-lib v0.1.0-1
