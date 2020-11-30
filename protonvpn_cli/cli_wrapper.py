@@ -15,7 +15,7 @@ from protonvpn_nm_lib.constants import (FLAT_SUPPORTED_PROTOCOLS,
                                         SUPPORTED_PROTOCOLS,
                                         VIRTUAL_DEVICE_NAME)
 from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
-                                    KillswitchStatusEnum,
+                                    KillswitchStatusEnum, MetadataEnum,
                                     ProtocolImplementationEnum,
                                     UserSettingEnum, UserSettingStatusEnum)
 from protonvpn_nm_lib.logger import logger
@@ -57,18 +57,19 @@ class CLIWrapper():
     server_manager = ServerManager(CertificateManager(), user_manager)
     ipv6_lp_manager = IPv6LeakProtectionManager()
     protonvpn_dialog = ProtonVPNDialog(server_manager, user_manager)
+    CLI_COMMAND_DICT = dict(
+        servername=server_manager.direct,
+        fastest=server_manager.fastest,
+        random=server_manager.random_c,
+        cc=server_manager.country_f,
+        sc=server_manager.feature_f,
+        p2p=server_manager.feature_f,
+        tor=server_manager.feature_f,
+    )
 
     def connect(self, args):
         """Proxymethod to connect to ProtonVPN."""
-        cli_commands = dict(
-            servername=self.server_manager.direct,
-            fastest=self.server_manager.fastest,
-            random=self.server_manager.random_c,
-            cc=self.server_manager.country_f,
-            sc=self.server_manager.feature_f,
-            p2p=self.server_manager.feature_f,
-            tor=self.server_manager.feature_f,
-        )
+
         self.server_manager.killswitch_status = self.user_conf_manager.killswitch # noqa
         command = False
         exit_type = 1
@@ -91,34 +92,19 @@ class CLIWrapper():
         self.check_internet_conn()
 
         for cls_attr in inspect.getmembers(args):
-            if cls_attr[0] in cli_commands and cls_attr[1]:
+            if cls_attr[0] in self.CLI_COMMAND_DICT and cls_attr[1]:
                 command = list(cls_attr)
 
         logger.info("CLI connect type: {}".format(command))
 
-        openvpn_username, openvpn_password = self.get_ovpn_credentials(
-            exit_type
-        )
-        logger.info("OpenVPN credentials fetched")
+        conn_status = self.prepare_add_connection(protocol, command)
 
-        (certificate_filename, domain,
-            entry_ip) = self.get_cert_filename_and_domain(
-            cli_commands, protocol, command
+        print(
+            "Connecting to ProtonVPN on {} with {}...".format(
+                conn_status[ConnectionMetadataEnum.SERVER],
+                conn_status[ConnectionMetadataEnum.PROTOCOL].upper(),
+            )
         )
-        logger.info("Certificate, domain and entry ip were fetched.")
-
-        self.add_vpn_connection(
-            certificate_filename, openvpn_username, openvpn_password,
-            domain, exit_type, entry_ip
-        )
-
-        conn_status = self.connection_manager.display_connection_status(
-            "all_connections"
-        )
-        print("Connecting to ProtonVPN on {} with {}...".format(
-            conn_status[ConnectionMetadataEnum.SERVER],
-            conn_status[ConnectionMetadataEnum.PROTOCOL].upper(),
-        ))
 
         self.connection_manager.start_connection()
         DBusGMainLoop(set_as_default=True)
@@ -292,7 +278,7 @@ class CLIWrapper():
     def configure(self, args):
         """Configure user settings."""
         logger.info("Starting to configure")
-        cli_commands = dict(
+        cli_config_commands = dict(
             protocol=self.set_protocol,
             dns=self.set_dns,
             ip=self.set_dns,
@@ -301,10 +287,10 @@ class CLIWrapper():
         )
 
         for cls_attr in inspect.getmembers(args):
-            if cls_attr[0] in cli_commands and cls_attr[1]:
+            if cls_attr[0] in cli_config_commands and cls_attr[1]:
                 command = list(cls_attr)
 
-        cli_commands[command[0]](command)
+        cli_config_commands[command[0]](command)
 
     def set_protocol(self, args):
         """Set default protocol setting.
@@ -451,6 +437,113 @@ class CLIWrapper():
 
         print("\nConfigurations were successfully restored back to defaults.")
         sys.exit()
+
+    def reconnect(self):
+        """Reconnect to previously connected server."""
+        logger.info("Attemtping to recconnect to previous server")
+        self.session = self.get_existing_session(1)
+        self.server_manager.killswitch_status = self.user_conf_manager.killswitch # noqa
+        try:
+            last_conn = self.server_manager.get_connection_metadata(
+                MetadataEnum.LAST_CONNECTION
+            )
+        except FileNotFoundError:
+            logger.error("No previous connection data was found, exitting")
+            print(
+                "No previous connection data was found, "
+                "please first connect to a server."
+            )
+            sys.exit(1)
+
+        try:
+            previous_server = last_conn[ConnectionMetadataEnum.SERVER]
+        except KeyError:
+            logger.error(
+                "File exists but servername field is missing, exitting"
+            )
+            print(
+                "No previous connection data was found, "
+                "please first connect to a server."
+            )
+            sys.exit(1)
+
+        if not self.server_manager.is_servername_valid(previous_server):
+            logger.error(
+                "Invalid stored servername: {}".format(
+                    previous_server
+                )
+            )
+            print(
+                "\nInvalid servername {}".format(
+                    previous_server
+                )
+            )
+            sys.exit(1)
+
+        try:
+            protocol = last_conn[ConnectionMetadataEnum.PROTOCOL]
+        except KeyError:
+            protocol = self.user_conf_manager.default_protocol
+
+        if protocol not in FLAT_SUPPORTED_PROTOCOLS:
+            logger.error(
+                "Stored protocol {} is invalid servername".format(
+                    protocol
+                )
+            )
+            print(
+                "\nStored protocol {} is invalid".format(
+                    protocol
+                )
+            )
+            sys.exit(1)
+
+        self.check_internet_conn()
+        print(previous_server, protocol)
+
+        self.remove_existing_connection()
+        conn_status = self.prepare_add_connection(
+            protocol, ["servername", previous_server]
+        )
+
+        print("Connecting to ProtonVPN on {} with {}...".format(
+            conn_status[ConnectionMetadataEnum.SERVER],
+            conn_status[ConnectionMetadataEnum.PROTOCOL].upper(),
+        ))
+        self.connection_manager.start_connection()
+        DBusGMainLoop(set_as_default=True)
+        loop = GLib.MainLoop()
+        MonitorVPNState(
+            VIRTUAL_DEVICE_NAME, loop, self.ks_manager,
+            self.user_conf_manager, self.connection_manager,
+            self.reconector_manager, self.session
+        )
+        sys.exit()
+
+    def prepare_add_connection(self, protocol, command):
+        exit_type = 1
+        openvpn_username, openvpn_password = self.get_ovpn_credentials(
+            exit_type
+        )
+        logger.info("OpenVPN credentials fetched")
+
+        (certificate_filename, domain,
+            entry_ip) = self.get_cert_filename_and_domain(
+                protocol,
+                command
+        )
+        logger.info("Certificate, domain and entry ip were fetched.")
+
+        self.add_vpn_connection(
+            certificate_filename, openvpn_username, openvpn_password,
+            domain, exit_type, entry_ip
+        )
+
+        conn_status = self.connection_manager.display_connection_status(
+            "all_connections"
+        )
+
+        return conn_status
 
     def check_internet_conn(self):
         try:
@@ -629,10 +722,7 @@ class CLIWrapper():
 
         return openvpn_username, openvpn_password
 
-    def get_cert_filename_and_domain(
-        self, cli_commands,
-        protocol, command
-    ):
+    def get_cert_filename_and_domain(self, protocol, command):
         """Proxymethod to get certficate filename and server domain."""
         is_dialog = False
         handle_error = False
@@ -652,7 +742,7 @@ class CLIWrapper():
                     self.session, protocol, servername
                 )
 
-            return cli_commands[command[0]](
+            return self.CLI_COMMAND_DICT[command[0]](
                 self.session, protocol, command
             )
         except (KeyError, TypeError, ValueError) as e:
@@ -707,9 +797,7 @@ class CLIWrapper():
         if handle_error == 403:
             self.login(force=True)
             self.session = self.get_existing_session(exit_type=1)
-            self.get_cert_filename_and_domain(
-                cli_commands, protocol, command
-            )
+            self.get_cert_filename_and_domain(protocol, command)
 
     def determine_protocol(self, args):
         """Determine protocol based on CLI input arguments."""

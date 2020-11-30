@@ -12,6 +12,7 @@ commands:
     c, connect          Connect to ProtonVPN.
     d, disconnect       Disconnect from ProtonVPN.
     s, status           Show connection status.
+    r, reconnect        Reconnect to previously connected server.
     config              Configure user settings.
     ks, killswitch      Configure killswitch settings.
 
@@ -27,6 +28,7 @@ examples:
     protonvpn-cli (c | connect) --help
     protonvpn-cli (d | disconnect)
     protonvpn-cli (s | status)
+    protonvpn-cli (r | reconnect)
     protonvpn-cli config
     protonvpn-cli config --help
     protonvpn-cli (-h | --help)

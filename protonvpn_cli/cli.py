@@ -11,7 +11,7 @@ from .constants import (APP_VERSION, CONFIG_HELP, CONNECT_HELP, LOGIN_HELP,
                         MAIN_CLI_HELP, KS_HELP)
 
 
-class NetworkManagerPrototypeCLI():
+class ProtonVPNCLI():
     def __init__(self):
         logger.info(
             "ProtonVPN CLI v{} "
@@ -193,6 +193,14 @@ class NetworkManagerPrototypeCLI():
 
         logger.info("Killswitch command: {}".format(args))
         self.cli_wrapper.set_killswitch(args)
+
+    def r(self):
+        """Shortcut to reconnect."""
+        self.reconnect()
+
+    def reconnect(self):
+        """Reconnect to previously connected server."""
+        self.cli_wrapper.reconnect()
 
     def config(self):
         """Manage user settings."""
