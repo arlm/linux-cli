@@ -1,14 +1,15 @@
-protonvpn-cli (3.1.0-6) UNRELEASED; urgency=low
+protonvpn-cli (3.1.0-7) UNRELEASED; urgency=low
 
   * Add support for protonvpn-nm-lib v0.2.0-1
   * Cache servers after connecting to vpn if previous cache failed
   * Check for input sanity before disconnecting VPN
-  * Add reconnect feature
+  * Feature: Add reconnect feature
   * Move ProtonVPNMonitorState to own class
-  * Add sudo check
   * Bugfix: Add missing import in vpn_state_monitor
+  * Bugfix: Add sudo check
+  * Bugfix: Catch KeyringError
 
- -- Proton Technologies AG <opensource@proton.me>  Thu, 03 Dec 2020 12:34:37 +0000
+ -- Proton Technologies AG <opensource@proton.me>  Thu, 03 Dec 2020 12:40:23 +0000
 
 protonvpn-cli (3.0.0-10) UNRELEASED; urgency=low
 

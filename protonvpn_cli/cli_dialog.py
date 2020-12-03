@@ -16,12 +16,8 @@ class ProtonVPNDialog:
     def __init__(self, server_manager, usermanager):
         self.server_manager = server_manager
         self.usermanager = usermanager
-        try:
-            self.user_tier = self.usermanager.tier
-        except exceptions.JSONDataNoneError:
-            self.user_tier = False
-
         self.session = None
+        self.user_tier = None
 
     def start(self, session):
         """Connect to server with a dialog menu.
@@ -47,6 +43,7 @@ class ProtonVPNDialog:
             sys.exit(1)
 
         self.session = session
+        self.user_tier = self.get_user_tier()
 
         is_previous_cache_available = False
         if os.path.isfile(CACHED_SERVERLIST):
@@ -120,7 +117,7 @@ class ProtonVPNDialog:
         country_servers = self.countries[self.country]
         other_servers = {}
         match_tier_servers = {}
-        self.user_tier = 3
+
         for server in country_servers:
             tier = self.server_manager.extract_server_value(
                 server, "Tier", self.servers
@@ -208,6 +205,30 @@ class ProtonVPNDialog:
         else:
             os.system("clear")
             print("Canceled.")
+            sys.exit(1)
+
+    def get_user_tier(self):
+        try:
+            return self.usermanager.tier
+        except exceptions.JSONDataEmptyError:
+            print(
+                "\nThe stored session might be corrupted. "
+                + "Please, try to login again."
+            )
+            sys.exit(1)
+        except (
+            exceptions.JSONDataError,
+            exceptions.JSONDataNoneError
+        ):
+            print("\nThere is no stored session. Please, login first.")
+            sys.exit(1)
+        except exceptions.AccessKeyringError:
+            print(
+                "Unable to load session. Could not access keyring."
+            )
+            sys.exit(1)
+        except exceptions.KeyringError as e:
+            print("\nUnknown keyring error occured: {}".format(e))
             sys.exit(1)
 
     def generate_country_dict(self, server_manager, servers):
