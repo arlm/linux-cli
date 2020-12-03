@@ -1,6 +1,7 @@
 import datetime
 import getpass
 import inspect
+import os
 import sys
 import time
 from textwrap import dedent
@@ -65,6 +66,14 @@ class CLIWrapper():
         p2p=server_manager.feature_f,
         tor=server_manager.feature_f,
     )
+
+    def __init__(self):
+        if "SUDO_UID" in os.environ:
+            print(
+                "\nProtonVPN does not require nor "
+                "support being executed as root user."
+            )
+            sys.exit(1)
 
     def connect(self, args):
         """Proxymethod to connect to ProtonVPN."""
