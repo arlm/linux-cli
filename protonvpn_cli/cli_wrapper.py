@@ -209,10 +209,13 @@ class CLIWrapper():
             _pass_check.append(exceptions.StoredSessionNotFound)
             self.logout(session, _pass_check, _removed)
         except exceptions.KeyringDataNotFound:
-            print("Unable to logout. No session was found.")
+            print("\nUnable to logout. No session was found.")
             sys.exit(exit_type)
         except exceptions.AccessKeyringError:
-            print("Unable to logout. Could not access keyring.")
+            print("\nUnable to logout. Could not access keyring.")
+            sys.exit(exit_type)
+        except exceptions.KeyringError as e:
+            print("\nUnknown keyring error occured: {}".format(e))
             sys.exit(exit_type)
         except Exception as e:
             capture_exception(e)
@@ -687,7 +690,7 @@ class CLIWrapper():
             openvpn_username, openvpn_password = self.user_manager.get_stored_vpn_credentials( # noqa
                 self.session
             )
-        except exceptions.JSONSDataEmptyError:
+        except exceptions.JSONDataEmptyError:
             print(
                 "\nThe stored session might be corrupted. "
                 + "Please, try to login again."
@@ -725,8 +728,7 @@ class CLIWrapper():
             sys.exit(exit_type)
 
         if error:
-            self.get_ovpn_credentials(1, True)
-            return
+            return self.get_ovpn_credentials(1, True)
 
         return openvpn_username, openvpn_password
 
@@ -809,6 +811,7 @@ class CLIWrapper():
 
     def determine_protocol(self, args):
         """Determine protocol based on CLI input arguments."""
+        logger.info("Determining protocol")
         try:
             protocol = args.protocol.lower().strip()
         except AttributeError:
@@ -820,11 +823,12 @@ class CLIWrapper():
 
     def get_existing_session(self, exit_type=1, is_connecting=True):
         """Proxymethod to get user session."""
+        logger.info("Attempt to get existing session")
         session_exists = False
 
         try:
             session = self.user_manager.load_session()
-        except exceptions.JSONSDataEmptyError:
+        except exceptions.JSONDataEmptyError:
             print(
                 "The stored session might be corrupted. "
                 + "Please, try to login again."
@@ -842,6 +846,10 @@ class CLIWrapper():
             print(
                 "Unable to load session. Could not access keyring."
             )
+            if is_connecting:
+                sys.exit(exit_type)
+        except exceptions.KeyringError as e:
+            print("\nUnknown keyring error occured: {}".format(e))
             if is_connecting:
                 sys.exit(exit_type)
         except Exception as e:

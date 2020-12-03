@@ -3,7 +3,6 @@ import sys
 import dbus
 from protonvpn_nm_lib.logger import logger
 from protonvpn_nm_lib.services.dbus_get_wrapper import DbusGetWrapper
-                                        VIRTUAL_DEVICE_NAME)
 from protonvpn_nm_lib.enums import KillswitchStatusEnum
 
 
