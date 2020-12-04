@@ -510,7 +510,6 @@ class CLIWrapper():
             sys.exit(1)
 
         self.check_internet_conn()
-        print(previous_server, protocol)
 
         self.remove_existing_connection()
         conn_status = self.prepare_add_connection(
@@ -529,6 +528,7 @@ class CLIWrapper():
             self.user_conf_manager, self.connection_manager,
             self.reconector_manager, self.session
         )
+        loop.run()
         sys.exit()
 
     def prepare_add_connection(self, protocol, command):
@@ -583,10 +583,6 @@ class CLIWrapper():
         Returns:
             tuple: (country, load, features_list)
         """
-        self.server_manager.cache_servers(
-            session=self.get_existing_session()
-        )
-
         servers = self.server_manager.extract_server_list()
         try:
             country_code = self.server_manager.extract_server_value(
