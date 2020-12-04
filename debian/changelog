@@ -1,4 +1,4 @@
-protonvpn-cli (3.1.0-8) UNRELEASED; urgency=low
+protonvpn-cli (3.1.0-9) UNRELEASED; urgency=low
 
   * Add support for protonvpn-nm-lib v0.2.0-1
   * Cache servers after connecting to vpn if previous cache failed
@@ -8,9 +8,9 @@ protonvpn-cli (3.1.0-8) UNRELEASED; urgency=low
   * Bugfix: Add missing import in vpn_state_monitor
   * Bugfix: Add sudo check
   * Bugfix: Catch KeyringError
-  * Bugfix: Cache prior displays connection status
+  * Bugfix: Cache prior displays connection status; incorrect cache when using dialog
 
- -- Proton Technologies AG <opensource@proton.me>  Fri, 04 Dec 2020 14:50:36 +0000
+ -- Proton Technologies AG <opensource@proton.me>  Fri, 04 Dec 2020 17:0:22 +0000
 
 protonvpn-cli (3.0.0-10) UNRELEASED; urgency=low
 
