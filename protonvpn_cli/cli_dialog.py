@@ -115,7 +115,7 @@ class ProtonVPNDialog:
 
     def sort_servers(self):
         country_servers = self.countries[self.country]
-        other_servers = {}
+        non_match_tier_servers = {}
         match_tier_servers = {}
 
         for server in country_servers:
@@ -125,12 +125,15 @@ class ProtonVPNDialog:
             if tier == self.user_tier:
                 match_tier_servers[server] = tier
                 continue
-            elif (tier > self.user_tier or tier < self.user_tier) and not tier == 3:
-                other_servers[server] = tier
+            elif (
+                (tier > self.user_tier or tier < self.user_tier)
+                and not tier == 3
+            ):
+                non_match_tier_servers[server] = tier
 
         sorted_dict = dict(
             sorted(
-                other_servers.items(),
+                non_match_tier_servers.items(),
                 key=lambda s: s[1],
                 reverse=True
             )
@@ -242,7 +245,7 @@ class ProtonVPNDialog:
         """
         countries = {}
         for server in servers:
-            country = server_manager.extract_country_name(server["ExitCountry"])
+            country = server_manager.extract_country_name(server["ExitCountry"]) # noqa
             if country not in countries.keys():
                 countries[country] = []
             countries[country].append(server["Name"])
