@@ -747,14 +747,21 @@ class CLIWrapper():
                 servername, protocol = self.protonvpn_dialog.start(
                     self.session
                 )
-
-                return self.server_manager.direct(
-                    self.session, protocol, servername
+                command = ["servername", servername]
+                return self.server_manager.generate(
+                    _method=self.CLI_COMMAND_DICT[command[0]],
+                    command=command,
+                    session=self.session,
+                    protocol=protocol
                 )
 
-            return self.CLI_COMMAND_DICT[command[0]](
-                self.session, protocol, command
+            return self.server_manager.generate(
+                _method=self.CLI_COMMAND_DICT[command[0]],
+                command=command,
+                session=self.session,
+                protocol=protocol
             )
+
         except (KeyError, TypeError, ValueError) as e:
             logger.exception("[!] Error: {}".format(e))
             print("\nError: {}".format(e))
