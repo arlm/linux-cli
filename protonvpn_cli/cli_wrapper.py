@@ -70,10 +70,14 @@ class CLIWrapper():
     def __init__(self):
         if "SUDO_UID" in os.environ:
             print(
-                "\nProtonVPN does not require nor "
-                "support being executed as root user."
+                "\nRunning ProtonVPN as root is not indended and "
+                "is highly discouraged, as it might introduce "
+                "undesirable side-effects."
             )
-            sys.exit(1)
+            user_input = input("Are you sure that you want to proceed (y/N): ")
+            user_input = user_input.lower()
+            if not user_input == "y":
+                sys.exit(1)
 
     def connect(self, args):
         """Proxymethod to connect to ProtonVPN."""
