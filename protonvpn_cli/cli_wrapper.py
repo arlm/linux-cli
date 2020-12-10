@@ -16,8 +16,7 @@ from protonvpn_nm_lib.constants import (FLAT_SUPPORTED_PROTOCOLS,
                                         VIRTUAL_DEVICE_NAME)
 from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
                                     KillswitchStatusEnum, MetadataEnum,
-                                    ProtocolImplementationEnum,
-                                    UserSettingEnum, UserSettingStatusEnum)
+                                    ProtocolImplementationEnum)
 from protonvpn_nm_lib.logger import logger
 from protonvpn_nm_lib.services import capture_exception
 from protonvpn_nm_lib.services.certificate_manager import CertificateManager
@@ -33,6 +32,7 @@ from protonvpn_nm_lib.services.user_manager import UserManager
 
 from .cli_dialog import ProtonVPNDialog
 from .vpn_state_monitor import ProtonVPNStateMonitor
+from .cli_configure import CLIConfigure
 
 
 class CLIWrapper():
@@ -61,7 +61,6 @@ class CLIWrapper():
             if not user_input == "y":
                 sys.exit(1)
 
-        self.time_sleep_value = 1
         self.reconector_manager = ReconnectorManager()
         self.user_conf_manager = UserConfigurationManager()
         self.ks_manager = KillSwitchManager(self.user_conf_manager)
@@ -74,21 +73,23 @@ class CLIWrapper():
         self.protonvpn_dialog = ProtonVPNDialog(
             self.server_manager, self.user_manager
         )
-        self.CLI_COMMAND_DICT = dict(
-            servername=self.server_manager.direct,
-            fastest=self.server_manager.fastest,
-            random=self.server_manager.random_c,
-            cc=self.server_manager.country_f,
-            sc=self.server_manager.feature_f,
-            p2p=self.server_manager.feature_f,
-            tor=self.server_manager.feature_f,
+        self.CLI_CONNECT_DICT = dict(
+            servername=self.server_manager.get_config_for_specific_server,
+            fastest=self.server_manager.get_config_for_fastest_server,
+            random=self.server_manager.get_config_for_random_server,
+            cc=self.server_manager.get_config_for_fastest_server_in_country,
+            sc=self.server_manager.get_config_for_fastest_server_with_specific_feature, # noqa
+            p2p=self.server_manager.get_config_for_fastest_server_with_specific_feature, # noqa
+            tor=self.server_manager.get_config_for_fastest_server_with_specific_feature, # noqa
         )
+
+        self.connect_option = None
+        self.connect_option_value = None
 
     def connect(self, args):
         """Proxymethod to connect to ProtonVPN."""
 
         self.server_manager.killswitch_status = self.user_conf_manager.killswitch # noqa
-        command = False
         exit_type = 1
         protocol = self.determine_protocol(args)
         self.session = self.get_existing_session(exit_type)
@@ -103,18 +104,21 @@ class CLIWrapper():
                 )
             )
             sys.exit(1)
-
+        delattr(args, "help")
+        self.server_manager.validate_session(self.session)
         self.remove_existing_connection()
-
         self.check_internet_conn()
 
         for cls_attr in inspect.getmembers(args):
-            if cls_attr[0] in self.CLI_COMMAND_DICT and cls_attr[1]:
-                command = list(cls_attr)
+            if cls_attr[0] in self.CLI_CONNECT_DICT and cls_attr[1]:
+                self.connect_option = cls_attr[0]
+                if isinstance(cls_attr[1], bool):
+                    self.connect_option_value = cls_attr[0]
+                    break
 
-        logger.info("CLI connect type: {}".format(command))
+                self.connect_option_value = cls_attr[1]
 
-        conn_status = self.prepare_add_connection(protocol, command)
+        conn_status = self.setup_connection(protocol)
 
         print(
             "Connecting to ProtonVPN on {} with {}...".format(
@@ -132,7 +136,7 @@ class CLIWrapper():
             self.reconector_manager, self.session
         )
         loop.run()
-        sys.exit(exit_type)
+        sys.exit()
 
     def disconnect(self):
         """Proxymethod to disconnect from ProtonVPN."""
@@ -197,6 +201,7 @@ class CLIWrapper():
         if _pass_check is None and _removed is None:
             print("Logging out...")
             session = self.get_existing_session(exit_type)
+            self.server_manager.validate_session(session)
             try:
                 session.logout()
             except exceptions.ProtonSessionWrapperError:
@@ -241,6 +246,7 @@ class CLIWrapper():
     def status(self):
         """Proxymethod to diplay connection status."""
         conn_status = self.connection_manager.display_connection_status()
+        print(conn_status)
         if not conn_status:
             print("\nNo active ProtonVPN connection.")
             sys.exit()
@@ -298,12 +304,13 @@ class CLIWrapper():
     def configure(self, args):
         """Configure user settings."""
         logger.info("Starting to configure")
+        cli_configure = CLIConfigure(self.user_conf_manager, self.ks_manager)
         cli_config_commands = dict(
-            protocol=self.set_protocol,
-            dns=self.set_dns,
-            ip=self.set_dns,
-            list=self.set_dns,
-            default=self.restore_default_configurations,
+            protocol=cli_configure.set_protocol,
+            dns=cli_configure.set_dns,
+            ip=cli_configure.set_dns,
+            list=cli_configure.set_dns,
+            default=cli_configure.restore_default_configurations,
         )
 
         for cls_attr in inspect.getmembers(args):
@@ -311,152 +318,6 @@ class CLIWrapper():
                 command = list(cls_attr)
 
         cli_config_commands[command[0]](command)
-
-    def set_protocol(self, args):
-        """Set default protocol setting.
-
-        Args:
-            Namespace (object): list objects with cli args
-        """
-        logger.info("Setting protocol to: {}".format(args))
-        protocol_value = [args[1].pop()].pop()
-
-        try:
-            index = FLAT_SUPPORTED_PROTOCOLS.index(protocol_value)
-        except ValueError:
-            logger.error("Select option is incorrect.")
-            print(
-                "\nSelected option \"{}\" is either incorrect ".format(
-                    protocol_value
-                ) + "or protocol is (yet) not supported"
-            )
-            sys.exit(1)
-
-        protocol = FLAT_SUPPORTED_PROTOCOLS[index]
-        self.user_conf_manager.update_default_protocol(
-           protocol
-        )
-
-        logger.info("Default protocol has been updated.")
-
-        if protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]:
-            protocol = "OpenVPN (" + protocol.upper() + ")"
-
-        print("\nDefault connection protocol has been updated to {}".format(
-            protocol
-        ))
-        sys.exit()
-
-    def set_dns(self, args):
-        """Set DNS setting.
-
-        Args:
-            Namespace (object): list objects with cli args
-        """
-        logger.info("Setting dns to: {}".format(args))
-        dns_command = args[0]
-
-        custom_dns_list = []
-
-        if dns_command == "list":
-            logger.info("Displaying custom DNS list")
-            user_configs = self.user_conf_manager.get_user_configurations()
-            dns_settings = user_configs[UserSettingEnum.CONNECTION]["dns"]
-            if len(dns_settings["custom_dns"]) > 0:
-                custom_dns_list = ", ".join(dns_settings["custom_dns"].split())
-            print(
-                "\n{}".format(
-                    "No custom DNS found"
-                    if not len(dns_settings["custom_dns"]) else
-                    "Custom DNS servers: " + custom_dns_list
-                )
-            )
-            sys.exit()
-
-        reminder = "These changes will apply the next time you connect to VPN." # noqa
-        confirmation_message = "\nDNS automatic configuration enabled.\n" + reminder # noqa
-        user_choice = UserSettingStatusEnum.ENABLED
-        if dns_command == "ip":
-            user_choice = UserSettingStatusEnum.CUSTOM
-            custom_dns_ips = args[1]
-            if len(custom_dns_ips) > 3:
-                logger.error("More then 3 custom DNS IPs were provided")
-                print(
-                    "\nYou provided more then 3 DNS servers. "
-                    "Please enter up to 3 DNS server IPs."
-                )
-                sys.exit(1)
-            for dns in custom_dns_ips:
-                if not self.user_conf_manager.is_valid_ip(dns):
-                    logger.error("{} is an invalid IP".format(dns))
-                    print(
-                        "\n{0} is invalid. "
-                        "Please provide a valid IP DNS server.".format(dns)
-                    )
-                    sys.exit(1)
-
-            custom_dns_list = " ".join(dns for dns in custom_dns_ips)
-            print_custom_dns_list = ", ".join(dns for dns in custom_dns_ips)
-            confirmation_message = "\nDNS will be managed by "\
-                "the provided custom IPs: \n\t{}\n{}".format(
-                    print_custom_dns_list,
-                    reminder
-                )
-
-        logger.info(confirmation_message)
-
-        self.user_conf_manager.update_dns(user_choice, custom_dns_list)
-        print(confirmation_message)
-        sys.exit()
-
-    def set_killswitch(self, args):
-        """Set kill switch setting.
-
-        Args:
-            Namespace (object): list objects with cli args
-        """
-        logger.info("Setting kill switch to: {}".format(args))
-        user_choice_options_dict = dict(
-            always_on=KillswitchStatusEnum.HARD,
-            on=KillswitchStatusEnum.SOFT,
-            off=KillswitchStatusEnum.DISABLED
-        )
-        contextual_conf_msg = {
-            KillswitchStatusEnum.HARD: "Always-on kill switch has been enabled.", # noqa
-            KillswitchStatusEnum.SOFT:"Kill switch has been enabled. Please reconnect to VPN to activate it.", # noqa
-            KillswitchStatusEnum.DISABLED: "Kill switch has been disabled."
-        }
-        for cls_attr in inspect.getmembers(args):
-            if cls_attr[0] in user_choice_options_dict and cls_attr[1]:
-                user_int_choice = user_choice_options_dict[cls_attr[0]]
-
-        self.user_conf_manager.update_killswitch(user_int_choice)
-        self.ks_manager.manage(user_int_choice, True)
-
-        print("\n" + contextual_conf_msg[user_int_choice])
-        sys.exit()
-
-    def restore_default_configurations(self, _):
-        """Restore default configurations."""
-        user_choice = input(
-            "\nAre you sure you want to restore to "
-            "default configurations? [y/N]: "
-        ).lower().strip()
-
-        if not user_choice == "y":
-            return
-
-        logger.info("Restoring default configurations")
-
-        print("Restoring default ProtonVPN configurations...")
-        time.sleep(0.5)
-
-        # should it disconnect prior to resetting user configurations ?
-
-        self.user_conf_manager.reset_default_configs()
-
-        print("\nConfigurations were successfully restored back to defaults.")
-        sys.exit()
 
     def reconnect(self):
         """Reconnect to previously connected server."""
@@ -521,7 +382,7 @@ class CLIWrapper():
         self.check_internet_conn()
 
         self.remove_existing_connection()
-        conn_status = self.prepare_add_connection(
+        conn_status = self.setup_connection(
             protocol, ["servername", previous_server]
         )
 
@@ -540,23 +401,32 @@ class CLIWrapper():
         loop.run()
         sys.exit()
 
-    def prepare_add_connection(self, protocol, command):
+    def setup_connection(self, protocol):
         exit_type = 1
         openvpn_username, openvpn_password = self.get_ovpn_credentials(
             exit_type
         )
         logger.info("OpenVPN credentials fetched")
 
-        (certificate_filename, domain,
-            entry_ip) = self.get_cert_filename_and_domain(
-                protocol,
-                command
+        (
+            servername, domain,
+            server_feature,
+            filtered_servers, servers
+        ) = self.get_connection_configurations()
+
+        (
+            certificate_fp,
+            matching_domain,
+            entry_ip
+        ) = self.server_manager.generate_server_certificate(
+            servername, domain, server_feature,
+            protocol, servers, filtered_servers
         )
         logger.info("Certificate, domain and entry ip were fetched.")
 
         self.add_vpn_connection(
-            certificate_filename, openvpn_username, openvpn_password,
-            domain, exit_type, entry_ip
+            certificate_fp, openvpn_username, openvpn_password,
+            matching_domain, exit_type, entry_ip
         )
 
         conn_status = self.connection_manager.display_connection_status(
@@ -737,14 +607,12 @@ class CLIWrapper():
 
         return openvpn_username, openvpn_password
 
-    def get_cert_filename_and_domain(self, protocol, command):
+    def get_connection_configurations(self):
         """Proxymethod to get certficate filename and server domain."""
         is_dialog = False
         handle_error = False
 
-        try:
-            invoke_dialog = command[0] # noqa
-        except TypeError:
+        if self.connect_option is None:
             is_dialog = True
 
         try:
@@ -752,19 +620,12 @@ class CLIWrapper():
                 servername, protocol = self.protonvpn_dialog.start(
                     self.session
                 )
-                command = ["servername", servername]
-                return self.server_manager.generate(
-                    _method=self.CLI_COMMAND_DICT[command[0]],
-                    command=command,
-                    session=self.session,
-                    protocol=protocol
-                )
+                self.connect_option = "servername"
+                self.connect_option_value = servername
 
-            return self.server_manager.generate(
-                _method=self.CLI_COMMAND_DICT[command[0]],
-                command=command,
-                session=self.session,
-                protocol=protocol
+            return self.CLI_CONNECT_DICT[self.connect_option](
+                self.session,
+                self.connect_option_value
             )
 
         except (KeyError, TypeError, ValueError) as e:
@@ -819,7 +680,7 @@ class CLIWrapper():
         if handle_error == 403:
             self.login(force=True)
             self.session = self.get_existing_session(exit_type=1)
-            self.get_cert_filename_and_domain(protocol, command)
+            return self.get_connection_configurations()
 
     def determine_protocol(self, args):
         """Determine protocol based on CLI input arguments."""
@@ -828,8 +689,8 @@ class CLIWrapper():
             protocol = args.protocol.lower().strip()
         except AttributeError:
             protocol = self.user_conf_manager.default_protocol
-        else:
-            delattr(args, "protocol")
+
+        delattr(args, "protocol")
 
         return protocol
 
