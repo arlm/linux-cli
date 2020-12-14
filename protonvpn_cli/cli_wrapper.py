@@ -48,29 +48,11 @@ class CLIWrapper():
         + "----------------"
         + "------------"
     )
-    time_sleep_value = 1
-    reconector_manager = ReconnectorManager()
-    user_conf_manager = UserConfigurationManager()
-    ks_manager = KillSwitchManager(user_conf_manager)
-    connection_manager = ConnectionManager()
-    user_manager = UserManager()
-    server_manager = ServerManager(CertificateManager(), user_manager)
-    ipv6_lp_manager = IPv6LeakProtectionManager()
-    protonvpn_dialog = ProtonVPNDialog(server_manager, user_manager)
-    CLI_COMMAND_DICT = dict(
-        servername=server_manager.direct,
-        fastest=server_manager.fastest,
-        random=server_manager.random_c,
-        cc=server_manager.country_f,
-        sc=server_manager.feature_f,
-        p2p=server_manager.feature_f,
-        tor=server_manager.feature_f,
-    )
 
     def __init__(self):
         if "SUDO_UID" in os.environ:
             print(
-                "\nRunning ProtonVPN as root is not indended and "
+                "\nRunning ProtonVPN as root is not supported and "
                 "is highly discouraged, as it might introduce "
                 "undesirable side-effects."
             )
@@ -78,6 +60,29 @@ class CLIWrapper():
             user_input = user_input.lower()
             if not user_input == "y":
                 sys.exit(1)
+
+        self.time_sleep_value = 1
+        self.reconector_manager = ReconnectorManager()
+        self.user_conf_manager = UserConfigurationManager()
+        self.ks_manager = KillSwitchManager(self.user_conf_manager)
+        self.connection_manager = ConnectionManager()
+        self.user_manager = UserManager()
+        self.server_manager = ServerManager(
+            CertificateManager(), self.user_manager
+        )
+        self.ipv6_lp_manager = IPv6LeakProtectionManager()
+        self.protonvpn_dialog = ProtonVPNDialog(
+            self.server_manager, self.user_manager
+        )
+        self.CLI_COMMAND_DICT = dict(
+            servername=self.server_manager.direct,
+            fastest=self.server_manager.fastest,
+            random=self.server_manager.random_c,
+            cc=self.server_manager.country_f,
+            sc=self.server_manager.feature_f,
+            p2p=self.server_manager.feature_f,
+            tor=self.server_manager.feature_f,
+        )
 
     def connect(self, args):
         """Proxymethod to connect to ProtonVPN."""
