@@ -13,7 +13,7 @@ setup(
     packages=find_packages(),
     entry_points={
         "console_scripts": [
-            "protonvpn-cli = protonvpn_cli.cli:ProtonVPNCLI"
+            "protonvpn-cli = protonvpn_cli.main:main"
         ]
     },
     description="Official ProtonVPN CLI for Linux",
