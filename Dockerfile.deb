@@ -1,0 +1,54 @@
+FROM IMAGE_URL_DEB
+ARG pkgname
+ENV pkgname=${pkgname:-protonvpn-cli}
+RUN apt-get update
+RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
+
+# Install a few useful packages
+
+RUN apt-get install -y net-tools \
+    apt-utils \
+    iproute2 \
+    python3 \
+    python3-pip \
+    network-manager \
+    network-manager-openvpn \
+    sudo \
+    vim \
+    pkg-config \
+    iputils-ping \
+    openvpn \
+    libsecret-tools \
+    dbus-x11 \
+    gnome-keyring \
+    libgirepository1.0-dev \
+    gir1.2-nm-1.0 \ 
+    libcairo2-dev
+
+RUN apt-get install -y \
+    python3-xdg \
+    python3-keyring \
+    python3-distro \
+    python3-jinja2 \
+    python3-dialog
+
+RUN apt-get install -y \
+    python3-pytest \
+    python3-pytest-cov
+
+RUN python3 -m pip install proton-client && \
+    python3 -m pip install --upgrade sentry-sdk==0.10.2
+
+RUN useradd -ms /bin/bash user
+RUN usermod -a -G sudo user
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+COPY docker_entry_deb.sh /usr/local/bin
+COPY . /home/user/$pkgname
+
+RUN chown -R user:user /home/user/$pkgname
+WORKDIR /home/user/$pkgname
+
+USER user
+
+ENTRYPOINT ["/usr/local/bin/docker_entry_deb.sh"]
