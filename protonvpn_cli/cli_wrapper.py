@@ -48,31 +48,41 @@ class CLIWrapper():
         + "----------------"
         + "------------"
     )
-    reconector_manager = ReconnectorManager()
-    user_conf_manager = UserConfigurationManager()
-    ks_manager = KillSwitchManager(user_conf_manager)
-    connection_manager = ConnectionManager()
-    user_manager = UserManager()
-    server_manager = ServerManager(CertificateManager(), user_manager)
-    ipv6_lp_manager = IPv6LeakProtectionManager()
-    protonvpn_dialog = ProtonVPNDialog(server_manager, user_manager)
-    CLI_CONNECT_DICT = dict(
-        servername=server_manager.get_config_for_specific_server,
-        fastest=server_manager.get_config_for_fastest_server,
-        random=server_manager.get_config_for_random_server,
-        cc=server_manager.get_config_for_fastest_server_in_country,
-        sc=server_manager.get_config_for_fastest_server_with_specific_feature,
-        p2p=server_manager.get_config_for_fastest_server_with_specific_feature,
-        tor=server_manager.get_config_for_fastest_server_with_specific_feature,
-    )
 
     def __init__(self):
         if "SUDO_UID" in os.environ:
             print(
-                "\nProtonVPN does not require nor "
-                "support being executed as root user."
+                "\nRunning ProtonVPN as root is not supported and "
+                "is highly discouraged, as it might introduce "
+                "undesirable side-effects."
             )
-            sys.exit(1)
+            user_input = input("Are you sure that you want to proceed (y/N): ")
+            user_input = user_input.lower()
+            if not user_input == "y":
+                sys.exit(1)
+
+        self.reconector_manager = ReconnectorManager()
+        self.user_conf_manager = UserConfigurationManager()
+        self.ks_manager = KillSwitchManager(self.user_conf_manager)
+        self.connection_manager = ConnectionManager()
+        self.user_manager = UserManager()
+        self.server_manager = ServerManager(
+            CertificateManager(), self.user_manager
+        )
+        self.ipv6_lp_manager = IPv6LeakProtectionManager()
+        self.protonvpn_dialog = ProtonVPNDialog(
+            self.server_manager, self.user_manager
+        )
+        self.CLI_CONNECT_DICT = dict(
+            servername=self.server_manager.get_config_for_specific_server,
+            fastest=self.server_manager.get_config_for_fastest_server,
+            random=self.server_manager.get_config_for_random_server,
+            cc=self.server_manager.get_config_for_fastest_server_in_country,
+            sc=self.server_manager.get_config_for_fastest_server_with_specific_feature, # noqa
+            p2p=self.server_manager.get_config_for_fastest_server_with_specific_feature, # noqa
+            tor=self.server_manager.get_config_for_fastest_server_with_specific_feature, # noqa
+        )
+
         self.connect_option = None
         self.connect_option_value = None
 
@@ -388,6 +398,7 @@ class CLIWrapper():
             self.user_conf_manager, self.connection_manager,
             self.reconector_manager, self.session
         )
+        loop.run()
         sys.exit()
 
     def setup_connection(self, protocol):

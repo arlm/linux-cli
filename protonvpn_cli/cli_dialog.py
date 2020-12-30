@@ -50,7 +50,7 @@ class ProtonVPNDialog:
             is_previous_cache_available = True
 
         try:
-            self.server_manager.cache_servers(self.session)
+            self.session.cache_servers()
         except exceptions.APITimeoutError as e:
             if not is_previous_cache_available:
                 logger.exception("[!] APITimeoutError: {}".format(e))

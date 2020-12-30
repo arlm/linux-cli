@@ -7,8 +7,8 @@ from protonvpn_nm_lib.enums import ProtocolEnum
 from protonvpn_nm_lib.logger import logger
 
 from .cli_wrapper import CLIWrapper
-from .constants import (APP_VERSION, CONFIG_HELP, CONNECT_HELP, LOGIN_HELP,
-                        MAIN_CLI_HELP, KS_HELP)
+from .constants import (APP_VERSION, CONFIG_HELP, CONNECT_HELP, KS_HELP,
+                        LOGIN_HELP, MAIN_CLI_HELP)
 
 
 class ProtonVPNCLI():
