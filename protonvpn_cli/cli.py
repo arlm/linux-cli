@@ -8,7 +8,7 @@ from protonvpn_nm_lib.logger import logger
 
 from .cli_wrapper import CLIWrapper
 from .constants import (APP_VERSION, CONFIG_HELP, CONNECT_HELP, KS_HELP,
-                        LOGIN_HELP, MAIN_CLI_HELP)
+                        LOGIN_HELP, MAIN_CLI_HELP, NETSHIELD_HELP)
 
 
 class ProtonVPNCLI():
@@ -201,6 +201,55 @@ class ProtonVPNCLI():
     def reconnect(self):
         """Reconnect to previously connected server."""
         self.cli_wrapper.reconnect()
+
+    def ns(self):
+        """Shortcut to manage netshield settings."""
+        self.netshield()
+
+    def netshield(self):
+        """Manage netshield settings."""
+        parser = argparse.ArgumentParser(
+            description="Connect to ProtonVPN",
+            prog="protonvpn-cli killswitch",
+            add_help=False
+        )
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "--off",
+            help="Disable netshield.",
+            action="store_true"
+        )
+        group.add_argument(
+            "--malware",
+            help="Block malware.",
+            action="store_true"
+        )
+        group.add_argument(
+            "--ads-malware",
+            help="Block ads and malware.",
+            action="store_true",
+        )
+        group.add_argument(
+            "-s", "--status",
+            help="Display netshield status.",
+            action="store_true"
+        )
+        parser.add_argument(
+            "-h", "--help", required=False, action="store_true"
+        )
+        args = parser.parse_args(sys.argv[2:])
+        if args.help or (
+            not args.help
+            and not args.malware
+            and not args.ads_malware
+            and not args.status
+            and not args.off
+        ):
+            print(NETSHIELD_HELP)
+            parser.exit()
+
+        logger.info("Netshield command: {}".format(args))
+        self.cli_wrapper.set_netshield(args)
 
     def config(self):
         """Manage user settings."""

@@ -10,7 +10,8 @@ from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 from protonvpn_nm_lib import exceptions
 from protonvpn_nm_lib.constants import (FLAT_SUPPORTED_PROTOCOLS,
-                                        KILLSWITCH_STATUS_TEXT, SERVER_TIERS,
+                                        KILLSWITCH_STATUS_TEXT,
+                                        SERVER_TIERS,
                                         SUPPORTED_FEATURES,
                                         SUPPORTED_PROTOCOLS,
                                         VIRTUAL_DEVICE_NAME)
@@ -30,9 +31,9 @@ from protonvpn_nm_lib.services.user_configuration_manager import \
     UserConfigurationManager
 from protonvpn_nm_lib.services.user_manager import UserManager
 
+from .cli_configure import CLIConfigure
 from .cli_dialog import ProtonVPNDialog
 from .vpn_state_monitor import ProtonVPNStateMonitor
-from .cli_configure import CLIConfigure
 
 
 class CLIWrapper():
@@ -65,7 +66,7 @@ class CLIWrapper():
         self.user_conf_manager = UserConfigurationManager()
         self.ks_manager = KillSwitchManager(self.user_conf_manager)
         self.connection_manager = ConnectionManager()
-        self.user_manager = UserManager()
+        self.user_manager = UserManager(self.user_conf_manager)
         self.server_manager = ServerManager(
             CertificateManager(), self.user_manager
         )
@@ -299,6 +300,73 @@ class CLIWrapper():
             features=features
         )
         print(status_to_print)
+        sys.exit()
+
+    def set_killswitch(self, args):
+        """Set kill switch setting.
+
+        Args:
+            Namespace (object): list objects with cli args
+        """
+        logger.info("Setting kill switch to: {}".format(args))
+        user_choice_options_dict = dict(
+            always_on=KillswitchStatusEnum.HARD,
+            on=KillswitchStatusEnum.SOFT,
+            off=KillswitchStatusEnum.DISABLED
+        )
+        contextual_conf_msg = {
+            KillswitchStatusEnum.HARD: "Always-on kill switch has been enabled.", # noqa
+            KillswitchStatusEnum.SOFT:"Kill switch has been enabled. Please reconnect to VPN to activate it.", # noqa
+            KillswitchStatusEnum.DISABLED: "Kill switch has been disabled."
+        }
+        for cls_attr in inspect.getmembers(args):
+            if cls_attr[0] in user_choice_options_dict and cls_attr[1]:
+                user_int_choice = user_choice_options_dict[cls_attr[0]]
+
+        self.user_conf_manager.update_killswitch(user_int_choice)
+        self.ks_manager.manage(user_int_choice, True)
+
+        print("\n" + contextual_conf_msg[user_int_choice])
+        sys.exit()
+
+    def set_netshield(self, args):
+        """Set netshield setting.
+
+        Args:
+            Namespace (object): list objects with cli args
+        """
+        logger.info("Setting netshield to: {}".format(args))
+        contextual_confirmation_msg = {
+            1: "Netshield is set to protect against malware.", # noqa
+            2: "Netshield is set to protect against ads and malware.", # noqa
+            0: "Netshield has been disabled."
+        }
+
+        if args.status:
+            print(
+                "\n" + contextual_confirmation_msg[
+                    self.user_conf_manager.netshield
+                ]
+            )
+            sys.exit()
+
+        user_choice_options_dict = dict(
+            malware=1,
+            ads_malware=2,
+            off=0
+        )
+
+        for cls_attr in inspect.getmembers(args):
+            if cls_attr[0] in user_choice_options_dict and cls_attr[1]:
+                user_choice = user_choice_options_dict[cls_attr[0]]
+
+        print(str(user_choice))
+        self.user_conf_manager.update_netshield(user_choice)
+
+        print(
+            "\n" + contextual_confirmation_msg[user_choice]
+            + " Please restart VPN connection if it is running."
+        )
         sys.exit()
 
     def configure(self, args):
