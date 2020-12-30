@@ -15,6 +15,7 @@ commands:
     r, reconnect        Reconnect to previously connected server.
     config              Configure user settings.
     ks, killswitch      Configure killswitch settings.
+    ns, netshield       Configure netshield settings.
 
 optional arguments:
     -h, --help          Display help message.
@@ -50,9 +51,8 @@ examples:
 """
 
 CONNECT_HELP = """
-usage:  protonvpn-cli (c | connect) [-h | --help] [<servername>]
-        [[-f | --fastest] | [-r | --random] | [--cc] | [--sc] | [--p2p] | [--tor]]
-        [[-p | --protocol] <protocol>]
+usage:  protonvpn-cli (c | connect) [-h | --help] 
+        [[<servername> | [-f | --fastest] | [-r | --random] | --cc | --sc | --p2p | --tor] [-p | --protocol] <protocol>]]
 
 positional arguments:
     <servername>    Directly connecto to
@@ -122,3 +122,22 @@ examples:
     protonvpn-cli (ks | killswitch) --always-on
     protonvpn-cli (ks | killswitch) --help
 """
+
+NETSHIELD_HELP = """
+usage:  protonvpn-cli (ns | netshield) [-h | --help]
+        [--off | --malware | --ads-malware | [-s | --show ]]
+
+optional arguments:
+    --off           Disable netshield.
+    --malware       Block malware.
+    --ads-malware   Block malware, ads and trackers.
+    -s, --status    Display netshield status.
+    -h, --help      Display help message.
+
+examples:
+    protonvpn-cli (ns | netshield) --malware
+    protonvpn-cli (ns | netshield) --ads-malware
+    protonvpn-cli (ns | netshield) [-s | --status]
+    protonvpn-cli (ns | netshield) --off
+    protonvpn-cli (ns | netshield) --help
+""" # noqa
