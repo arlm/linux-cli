@@ -336,6 +336,8 @@ class CLIWrapper():
             Namespace (object): list objects with cli args
         """
         logger.info("Setting netshield to: {}".format(args))
+        self.get_existing_session(1)
+
         contextual_confirmation_msg = {
             1: "Netshield is set to protect against malware.", # noqa
             2: "Netshield is set to protect against ads and malware.", # noqa
