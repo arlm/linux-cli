@@ -360,7 +360,6 @@ class CLIWrapper():
             if cls_attr[0] in user_choice_options_dict and cls_attr[1]:
                 user_choice = user_choice_options_dict[cls_attr[0]]
 
-        print(str(user_choice))
         self.user_conf_manager.update_netshield(user_choice)
 
         print(
