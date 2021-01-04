@@ -17,7 +17,7 @@ from protonvpn_nm_lib.constants import (FLAT_SUPPORTED_PROTOCOLS,
                                         VIRTUAL_DEVICE_NAME)
 from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
                                     KillswitchStatusEnum, MetadataEnum,
-                                    ProtocolImplementationEnum)
+                                    ProtocolImplementationEnum, ServerTierEnum)
 from protonvpn_nm_lib.logger import logger
 from protonvpn_nm_lib.services import capture_exception
 from protonvpn_nm_lib.services.certificate_manager import CertificateManager
@@ -247,7 +247,7 @@ class CLIWrapper():
     def status(self):
         """Proxymethod to diplay connection status."""
         conn_status = self.connection_manager.display_connection_status()
-        print(conn_status)
+
         if not conn_status:
             print("\nNo active ProtonVPN connection.")
             sys.exit()
@@ -338,9 +338,21 @@ class CLIWrapper():
         logger.info("Setting netshield to: {}".format(args))
         self.get_existing_session(1)
 
+        if not args.off and self.user_manager.tier == ServerTierEnum.FREE:
+            print(
+                "\nNetshield is a premium feature. "
+                "To make use of it, please upgrade your plan at: "
+                "https://account.protonvpn.com/dashboard#subscription"
+            )
+            sys.exit()
+
+        restart_vpn_message = ""
+        if self.connection_manager.display_connection_status():
+            restart_vpn_message = " Please restart your VPN connection."
+
         contextual_confirmation_msg = {
-            1: "Netshield is set to protect against malware.", # noqa
-            2: "Netshield is set to protect against ads and malware.", # noqa
+            1: "Netshield set to protect against malware.", # noqa
+            2: "Netshield set to protect against ads and malware.", # noqa
             0: "Netshield has been disabled."
         }
 
@@ -361,12 +373,11 @@ class CLIWrapper():
         for cls_attr in inspect.getmembers(args):
             if cls_attr[0] in user_choice_options_dict and cls_attr[1]:
                 user_choice = user_choice_options_dict[cls_attr[0]]
-
         self.user_conf_manager.update_netshield(user_choice)
 
         print(
             "\n" + contextual_confirmation_msg[user_choice]
-            + " Please restart VPN connection if it is running."
+            + restart_vpn_message
         )
         sys.exit()
 
