@@ -66,7 +66,7 @@ class CLIWrapper():
         self.user_conf_manager = UserConfigurationManager()
         self.ks_manager = KillSwitchManager(self.user_conf_manager)
         self.connection_manager = ConnectionManager()
-        self.user_manager = UserManager(self.user_conf_manager)
+        self.user_manager = UserManager()
         self.server_manager = ServerManager(
             CertificateManager(), self.user_manager
         )
