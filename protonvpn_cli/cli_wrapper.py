@@ -341,7 +341,7 @@ class CLIWrapper():
         if not args.off and self.user_manager.tier == ServerTierEnum.FREE:
             print(
                 "\nBrowse the Internet free of malware, ads, "
-                " and trackers with NetShield.\n"
+                "and trackers with NetShield.\n"
                 "To use NetShield, upgrade your subscription at: "
                 "https://account.protonvpn.com/dashboard"
             )
