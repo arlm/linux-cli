@@ -66,7 +66,7 @@ class CLIWrapper():
         self.user_conf_manager = UserConfigurationManager()
         self.ks_manager = KillSwitchManager(self.user_conf_manager)
         self.connection_manager = ConnectionManager()
-        self.user_manager = UserManager()
+        self.user_manager = UserManager(self.user_conf_manager)
         self.server_manager = ServerManager(
             CertificateManager(), self.user_manager
         )
@@ -340,9 +340,10 @@ class CLIWrapper():
 
         if not args.off and self.user_manager.tier == ServerTierEnum.FREE:
             print(
-                "\nNetshield is a premium feature. "
-                "To make use of it, please upgrade your plan at: "
-                "https://account.protonvpn.com/dashboard#subscription"
+                "\nBrowse the Internet free of malware, ads, "
+                " and trackers with NetShield.\n"
+                "To use NetShield, upgrade your subscription at: "
+                "https://account.protonvpn.com/dashboard"
             )
             sys.exit()
 
