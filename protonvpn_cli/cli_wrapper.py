@@ -17,7 +17,8 @@ from protonvpn_nm_lib.constants import (FLAT_SUPPORTED_PROTOCOLS,
                                         VIRTUAL_DEVICE_NAME)
 from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
                                     KillswitchStatusEnum, MetadataEnum,
-                                    ProtocolImplementationEnum, ServerTierEnum)
+                                    ProtocolImplementationEnum, ServerTierEnum,
+                                    NetshieldTranslationEnum)
 from protonvpn_nm_lib.logger import logger
 from protonvpn_nm_lib.services import capture_exception
 from protonvpn_nm_lib.services.certificate_manager import CertificateManager
@@ -352,9 +353,9 @@ class CLIWrapper():
             restart_vpn_message = " Please restart your VPN connection."
 
         contextual_confirmation_msg = {
-            1: "Netshield set to protect against malware.", # noqa
-            2: "Netshield set to protect against ads and malware.", # noqa
-            0: "Netshield has been disabled."
+            NetshieldTranslationEnum.MALWARE: "Netshield set to protect against malware.", # noqa
+            NetshieldTranslationEnum.ADS_MALWARE: "Netshield set to protect against ads and malware.", # noqa
+            NetshieldTranslationEnum.DISABLED: "Netshield has been disabled."
         }
 
         if args.status:
@@ -366,9 +367,9 @@ class CLIWrapper():
             sys.exit()
 
         user_choice_options_dict = dict(
-            malware=1,
-            ads_malware=2,
-            off=0
+            malware=NetshieldTranslationEnum.MALWARE,
+            ads_malware=NetshieldTranslationEnum.ADS_MALWARE,
+            off=NetshieldTranslationEnum.DISABLED
         )
 
         for cls_attr in inspect.getmembers(args):
