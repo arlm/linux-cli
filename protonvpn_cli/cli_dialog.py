@@ -72,7 +72,7 @@ class ProtonVPNDialog:
 
         self.servers = self.server_manager.extract_server_list()
         self.filtered_servers = self.server_manager.filter_servers(
-            self.session, self.servers
+            self.servers
         )
         self.countries = self.generate_country_dict(
             self.server_manager, self.filtered_servers

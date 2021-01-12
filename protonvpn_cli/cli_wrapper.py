@@ -10,13 +10,15 @@ from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 from protonvpn_nm_lib import exceptions
 from protonvpn_nm_lib.constants import (FLAT_SUPPORTED_PROTOCOLS,
-                                        KILLSWITCH_STATUS_TEXT, SERVER_TIERS,
+                                        KILLSWITCH_STATUS_TEXT,
+                                        SERVER_TIERS,
                                         SUPPORTED_FEATURES,
                                         SUPPORTED_PROTOCOLS,
                                         VIRTUAL_DEVICE_NAME)
 from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
                                     KillswitchStatusEnum, MetadataEnum,
-                                    ProtocolImplementationEnum)
+                                    ProtocolImplementationEnum, ServerTierEnum,
+                                    NetshieldTranslationEnum)
 from protonvpn_nm_lib.logger import logger
 from protonvpn_nm_lib.services import capture_exception
 from protonvpn_nm_lib.services.certificate_manager import CertificateManager
@@ -30,9 +32,9 @@ from protonvpn_nm_lib.services.user_configuration_manager import \
     UserConfigurationManager
 from protonvpn_nm_lib.services.user_manager import UserManager
 
+from .cli_configure import CLIConfigure
 from .cli_dialog import ProtonVPNDialog
 from .vpn_state_monitor import ProtonVPNStateMonitor
-from .cli_configure import CLIConfigure
 
 
 class CLIWrapper():
@@ -65,7 +67,7 @@ class CLIWrapper():
         self.user_conf_manager = UserConfigurationManager()
         self.ks_manager = KillSwitchManager(self.user_conf_manager)
         self.connection_manager = ConnectionManager()
-        self.user_manager = UserManager()
+        self.user_manager = UserManager(self.user_conf_manager)
         self.server_manager = ServerManager(
             CertificateManager(), self.user_manager
         )
@@ -246,7 +248,7 @@ class CLIWrapper():
     def status(self):
         """Proxymethod to diplay connection status."""
         conn_status = self.connection_manager.display_connection_status()
-        print(conn_status)
+
         if not conn_status:
             print("\nNo active ProtonVPN connection.")
             sys.exit()
@@ -299,6 +301,86 @@ class CLIWrapper():
             features=features
         )
         print(status_to_print)
+        sys.exit()
+
+    def set_killswitch(self, args):
+        """Set kill switch setting.
+
+        Args:
+            Namespace (object): list objects with cli args
+        """
+        logger.info("Setting kill switch to: {}".format(args))
+        user_choice_options_dict = dict(
+            always_on=KillswitchStatusEnum.HARD,
+            on=KillswitchStatusEnum.SOFT,
+            off=KillswitchStatusEnum.DISABLED
+        )
+        contextual_conf_msg = {
+            KillswitchStatusEnum.HARD: "Always-on kill switch has been enabled.", # noqa
+            KillswitchStatusEnum.SOFT:"Kill switch has been enabled. Please reconnect to VPN to activate it.", # noqa
+            KillswitchStatusEnum.DISABLED: "Kill switch has been disabled."
+        }
+        for cls_attr in inspect.getmembers(args):
+            if cls_attr[0] in user_choice_options_dict and cls_attr[1]:
+                user_int_choice = user_choice_options_dict[cls_attr[0]]
+
+        self.user_conf_manager.update_killswitch(user_int_choice)
+        self.ks_manager.manage(user_int_choice, True)
+
+        print("\n" + contextual_conf_msg[user_int_choice])
+        sys.exit()
+
+    def set_netshield(self, args):
+        """Set netshield setting.
+
+        Args:
+            Namespace (object): list objects with cli args
+        """
+        logger.info("Setting netshield to: {}".format(args))
+        self.get_existing_session(1)
+
+        if not args.off and self.user_manager.tier == ServerTierEnum.FREE:
+            print(
+                "\nBrowse the Internet free of malware, ads, "
+                "and trackers with NetShield.\n"
+                "To use NetShield, upgrade your subscription at: "
+                "https://account.protonvpn.com/dashboard"
+            )
+            sys.exit()
+
+        restart_vpn_message = ""
+        if self.connection_manager.display_connection_status():
+            restart_vpn_message = " Please restart your VPN connection."
+
+        contextual_confirmation_msg = {
+            NetshieldTranslationEnum.MALWARE: "Netshield set to protect against malware.", # noqa
+            NetshieldTranslationEnum.ADS_MALWARE: "Netshield set to protect against ads and malware.", # noqa
+            NetshieldTranslationEnum.DISABLED: "Netshield has been disabled."
+        }
+
+        if args.status:
+            print(
+                "\n" + contextual_confirmation_msg[
+                    self.user_conf_manager.netshield
+                ]
+            )
+            sys.exit()
+
+        user_choice_options_dict = dict(
+            malware=NetshieldTranslationEnum.MALWARE,
+            ads_malware=NetshieldTranslationEnum.ADS_MALWARE,
+            off=NetshieldTranslationEnum.DISABLED
+        )
+
+        for cls_attr in inspect.getmembers(args):
+            if cls_attr[0] in user_choice_options_dict and cls_attr[1]:
+                user_choice = user_choice_options_dict[cls_attr[0]]
+        self.user_conf_manager.update_netshield(user_choice)
+
+        print(
+            "\n" + contextual_confirmation_msg[user_choice]
+            + restart_vpn_message
+        )
         sys.exit()
 
     def configure(self, args):
