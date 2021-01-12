@@ -1,4 +1,4 @@
-protonvpn-cli (3.2.0-3) UNRELEASED; urgency=low
+protonvpn-cli (3.2.0-4) UNRELEASED; urgency=low
 
   * Add support for protonvpn-nm-lib v0.3.0-1
   * Update dependencies
