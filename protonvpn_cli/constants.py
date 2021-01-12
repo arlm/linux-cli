@@ -2,7 +2,8 @@ APP_VERSION = "3.2.0"
 MAIN_CLI_HELP = """
 ProtonVPN CLI v{}
 
-For bugs and errors, please contact linux-beta@protonvpn.com
+For bugs and errors, please use the form https://protonvpn.com/support-form
+or send a report to support@protonvpn.com.
 
 usage:  protonvpn-cli [--version | --help] <command>
 
