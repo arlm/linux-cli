@@ -1,13 +1,11 @@
-protonvpn-cli (3.2.0-2) UNRELEASED; urgency=low
+protonvpn-cli (3.2.0-3) UNRELEASED; urgency=low
 
   * Add support for protonvpn-nm-lib v0.3.0-1
   * Update dependencies
   * Feature: Add netshield support
-
- -- Proton Technologies AG <opensource@proton.me>  Fri, 08 Jan 2021 15:10:17 +0000
   * Bugfix: correctly handle if connectivity check can not disabled
 
- -- Proton Technologies AG <opensource@proton.me>  Fri, 08 Jan 2021 15:03:24 +0000
+ -- Proton Technologies AG <opensource@proton.me>  Fri, 08 Jan 2021 15:10:17 +0000
 
 protonvpn-cli (3.1.0-12) UNRELEASED; urgency=low
 
