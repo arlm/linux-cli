@@ -2,7 +2,8 @@ APP_VERSION = "3.2.0"
 MAIN_CLI_HELP = """
 ProtonVPN CLI v{}
 
-For bugs and errors, please use the form https://protonvpn.com/support-form or send a report to support@protonvpn.com.
+For bugs and errors, please use the form https://protonvpn.com/support-form
+or send a report to support@protonvpn.com.
 
 usage:  protonvpn-cli [--version | --help] <command>
 
@@ -34,7 +35,7 @@ examples:
     protonvpn-cli config --help
     protonvpn-cli (-h | --help)
     protonvpn-cli (-v | --version)
-""".format(APP_VERSION) # noqa
+""".format(APP_VERSION)
 
 LOGIN_HELP = """
 usage:  protonvpn-cli login [-h | --help] <pvpn_username>
