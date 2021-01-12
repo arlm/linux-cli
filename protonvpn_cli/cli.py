@@ -191,7 +191,7 @@ class ProtonVPNCLI():
             print(KS_HELP)
             parser.exit()
 
-        logger.info("Killswitch command: {}".format(args))
+        logger.info("Kill Switch command: {}".format(args))
         self.cli_wrapper.set_killswitch(args)
 
     def r(self):
@@ -203,11 +203,11 @@ class ProtonVPNCLI():
         self.cli_wrapper.reconnect()
 
     def ns(self):
-        """Shortcut to manage netshield settings."""
+        """Shortcut to manage NetShield settings."""
         self.netshield()
 
     def netshield(self):
-        """Manage netshield settings."""
+        """Manage NetShield settings."""
         parser = argparse.ArgumentParser(
             description="Connect to ProtonVPN",
             prog="protonvpn-cli killswitch",
@@ -216,7 +216,7 @@ class ProtonVPNCLI():
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             "--off",
-            help="Disable netshield.",
+            help="Disable NetShield.",
             action="store_true"
         )
         group.add_argument(
@@ -226,12 +226,12 @@ class ProtonVPNCLI():
         )
         group.add_argument(
             "--ads-malware",
-            help="Block ads and malware.",
+            help="Block malware, ads, & trackers.",
             action="store_true",
         )
         group.add_argument(
             "-s", "--status",
-            help="Display netshield status.",
+            help="Display NetShield status.",
             action="store_true"
         )
         parser.add_argument(
@@ -248,7 +248,7 @@ class ProtonVPNCLI():
             print(NETSHIELD_HELP)
             parser.exit()
 
-        logger.info("Netshield command: {}".format(args))
+        logger.info("NetShield command: {}".format(args))
         self.cli_wrapper.set_netshield(args)
 
     def config(self):

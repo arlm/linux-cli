@@ -14,8 +14,8 @@ commands:
     s, status           Show connection status.
     r, reconnect        Reconnect to previously connected server.
     config              Configure user settings.
-    ks, killswitch      Configure killswitch settings.
-    ns, netshield       Configure netshield settings.
+    ks, killswitch      Configure Kill Switch settings.
+    ns, netshield       Configure NetShield settings.
 
 optional arguments:
     -h, --help          Display help message.
@@ -107,10 +107,10 @@ usage:  protonvpn-cli (ks | killswitch) [-h | --help]
         [--on | --off | --always-on]
 
 optional arguments:
-    --on            Start kill switch upon connecting to VPN
+    --on            Start Kill Switch upon connecting to VPN
                     and stop it when disconnecting from VPN.
-    --off           Stop and remove kill switch.
-    --always-on     Start kill switch regardless of VPN connection.
+    --off           Stop and remove Kill Switch.
+    --always-on     Start Kill Switch regardless of VPN connection.
                     Warning: This takes effect immediatly and you
                     might end up without internet connection.
                     Either connect to VPN or turn the ks off.
@@ -128,10 +128,10 @@ usage:  protonvpn-cli (ns | netshield) [-h | --help]
         [--off | --malware | --ads-malware | [-s | --show ]]
 
 optional arguments:
-    --off           Disable netshield.
+    --off           Disable NetShield.
     --malware       Block malware.
-    --ads-malware   Block malware, ads and trackers.
-    -s, --status    Display netshield status.
+    --ads-malware   Block malware, ads, & trackers
+    -s, --status    Display NetShield status.
     -h, --help      Display help message.
 
 examples:
