@@ -120,7 +120,8 @@ class CLIWrapper():
 
                 self.connect_option_value = cls_attr[1]
 
-        conn_status = self.setup_connection(protocol)
+        self.protocol = protocol
+        conn_status = self.setup_connection()
 
         print(
             "Connecting to ProtonVPN on {} with {}...".format(
@@ -471,12 +472,13 @@ class CLIWrapper():
             )
             sys.exit(1)
 
+        self.protocol = protocol
         self.check_internet_conn()
 
         self.remove_existing_connection()
         self.connect_option = "servername"
         self.connect_option_value = previous_server
-        conn_status = self.setup_connection(protocol)
+        conn_status = self.setup_connection()
 
         print("Connecting to ProtonVPN on {} with {}...".format(
             conn_status[ConnectionMetadataEnum.SERVER],
@@ -493,7 +495,7 @@ class CLIWrapper():
         loop.run()
         sys.exit()
 
-    def setup_connection(self, protocol):
+    def setup_connection(self):
         exit_type = 1
         openvpn_username, openvpn_password = self.get_ovpn_credentials(
             exit_type
@@ -512,7 +514,7 @@ class CLIWrapper():
             entry_ip
         ) = self.server_manager.generate_server_certificate(
             servername, domain, server_feature,
-            protocol, servers, filtered_servers
+            self.protocol, servers, filtered_servers
         )
         logger.info("Certificate, domain and entry ip were fetched.")
 
@@ -714,6 +716,7 @@ class CLIWrapper():
                 )
                 self.connect_option = "servername"
                 self.connect_option_value = servername
+                self.protocol = protocol
 
             return self.CLI_CONNECT_DICT[self.connect_option](
                 self.session,
