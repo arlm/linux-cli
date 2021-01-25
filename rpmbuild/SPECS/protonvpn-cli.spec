@@ -1,5 +1,5 @@
 %define unmangled_name protonvpn-cli
-%define version 3.2.0
+%define version 3.2.1
 %define release 1
 
 Summary: ProtonVPN CLI
