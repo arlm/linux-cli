@@ -303,33 +303,6 @@ class CLIWrapper():
         print(status_to_print)
         sys.exit()
 
-    def set_killswitch(self, args):
-        """Set kill switch setting.
-
-        Args:
-            Namespace (object): list objects with cli args
-        """
-        logger.info("Setting kill switch to: {}".format(args))
-        user_choice_options_dict = dict(
-            always_on=KillswitchStatusEnum.HARD,
-            on=KillswitchStatusEnum.SOFT,
-            off=KillswitchStatusEnum.DISABLED
-        )
-        contextual_conf_msg = {
-            KillswitchStatusEnum.HARD: "Always-on kill switch has been enabled.", # noqa
-            KillswitchStatusEnum.SOFT:"Kill switch has been enabled. Please reconnect to VPN to activate it.", # noqa
-            KillswitchStatusEnum.DISABLED: "Kill switch has been disabled."
-        }
-        for cls_attr in inspect.getmembers(args):
-            if cls_attr[0] in user_choice_options_dict and cls_attr[1]:
-                user_int_choice = user_choice_options_dict[cls_attr[0]]
-
-        self.user_conf_manager.update_killswitch(user_int_choice)
-        self.ks_manager.manage(user_int_choice, True)
-
-        print("\n" + contextual_conf_msg[user_int_choice])
-        sys.exit()
-
     def set_netshield(self, args):
         """Set netshield setting.
 
@@ -501,9 +474,9 @@ class CLIWrapper():
         self.check_internet_conn()
 
         self.remove_existing_connection()
-        conn_status = self.setup_connection(
-            protocol, ["servername", previous_server]
-        )
+        self.connect_option = "servername"
+        self.connect_option_value = previous_server
+        conn_status = self.setup_connection(protocol)
 
         print("Connecting to ProtonVPN on {} with {}...".format(
             conn_status[ConnectionMetadataEnum.SERVER],
