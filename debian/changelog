@@ -1,3 +1,9 @@
+protonvpn-cli (3.2.1-1) unstable; urgency=low
+
+  * Hotfix: reconnect command bug fixed
+
+ -- Proton Technologies AG <opensource@proton.me>  Mon, 25 Jan 2021 09:40:03 +0000
+
 protonvpn-cli (3.2.0-4) UNRELEASED; urgency=low
 
   * Add support for protonvpn-nm-lib v0.3.0-1
