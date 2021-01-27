@@ -1,27 +1,32 @@
 %define unmangled_name protonvpn-cli
 %define version 3.2.1
-%define release 1
+%define release 2
 
-Summary: ProtonVPN CLI
+Prefix: %{_prefix}
+
 Name: protonvpn-cli
 Version: %{version}
 Release: %{release}
-Source0: %{unmangled_name}-%{version}.tar.gz
-License: MIT
-Group: Development/Libraries
-BuildRoot: %{_tmppath}/%{unmangled_name}-%{version}-%{release}-buildroot
-Prefix: %{_prefix}
-BuildArch: noarch
-Vendor: Proton Technologies AG <opensource@proton.me>
+Summary: Official ProtonVPN CLI
+
+Group: ProtonVPN
+License: GPLv3
 Url: https://github.com/ProtonVPN
+Vendor: Proton Technologies AG <opensource@proton.me>
+Source0: %{unmangled_name}-%{version}.tar.gz
+Group: Development/Libraries
+BuildArch: noarch
+BuildRoot: %{_tmppath}/%{unmangled_name}-%{version}-%{release}-buildroot
+
+BuildRequires: python3-devel
+BuildRequires: python3-setuptools
 Requires: python3-protonvpn-nm-lib
 Requires: python3-dialog
-
 
 %{?python_disable_dependency_generator}
 
 %description
-Official Linux CLI client.
+Official ProtonVPN CLI.
 
 
 %prep
@@ -37,4 +42,10 @@ python3 setup.py install --single-version-externally-managed -O1 --root=$RPM_BUI
 rm -rf $RPM_BUILD_ROOT
 
 %files -f INSTALLED_FILES
+%{python3_sitelib}/protonvpn_cli/
+%{python3_sitelib}/protonvpn_cli-%{version}*.egg-info/
 %defattr(-,root,root)
+
+%changelog
+* Wed Jan 27 2021 Proton Technologies AG <opensource@proton.me> 3.2.1-2
+- Update .spec file for public release
