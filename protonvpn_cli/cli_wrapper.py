@@ -120,7 +120,8 @@ class CLIWrapper():
 
                 self.connect_option_value = cls_attr[1]
 
-        conn_status = self.setup_connection(protocol)
+        self.protocol = protocol
+        conn_status = self.setup_connection()
 
         print(
             "Connecting to ProtonVPN on {} with {}...".format(
@@ -303,33 +304,6 @@ class CLIWrapper():
         print(status_to_print)
         sys.exit()
 
-    def set_killswitch(self, args):
-        """Set kill switch setting.
-
-        Args:
-            Namespace (object): list objects with cli args
-        """
-        logger.info("Setting kill switch to: {}".format(args))
-        user_choice_options_dict = dict(
-            always_on=KillswitchStatusEnum.HARD,
-            on=KillswitchStatusEnum.SOFT,
-            off=KillswitchStatusEnum.DISABLED
-        )
-        contextual_conf_msg = {
-            KillswitchStatusEnum.HARD: "Always-on kill switch has been enabled.", # noqa
-            KillswitchStatusEnum.SOFT:"Kill switch has been enabled. Please reconnect to VPN to activate it.", # noqa
-            KillswitchStatusEnum.DISABLED: "Kill switch has been disabled."
-        }
-        for cls_attr in inspect.getmembers(args):
-            if cls_attr[0] in user_choice_options_dict and cls_attr[1]:
-                user_int_choice = user_choice_options_dict[cls_attr[0]]
-
-        self.user_conf_manager.update_killswitch(user_int_choice)
-        self.ks_manager.manage(user_int_choice, True)
-
-        print("\n" + contextual_conf_msg[user_int_choice])
-        sys.exit()
-
     def set_netshield(self, args):
         """Set netshield setting.
 
@@ -498,12 +472,13 @@ class CLIWrapper():
             )
             sys.exit(1)
 
+        self.protocol = protocol
         self.check_internet_conn()
 
         self.remove_existing_connection()
-        conn_status = self.setup_connection(
-            protocol, ["servername", previous_server]
-        )
+        self.connect_option = "servername"
+        self.connect_option_value = previous_server
+        conn_status = self.setup_connection()
 
         print("Connecting to ProtonVPN on {} with {}...".format(
             conn_status[ConnectionMetadataEnum.SERVER],
@@ -520,7 +495,7 @@ class CLIWrapper():
         loop.run()
         sys.exit()
 
-    def setup_connection(self, protocol):
+    def setup_connection(self):
         exit_type = 1
         openvpn_username, openvpn_password = self.get_ovpn_credentials(
             exit_type
@@ -539,7 +514,7 @@ class CLIWrapper():
             entry_ip
         ) = self.server_manager.generate_server_certificate(
             servername, domain, server_feature,
-            protocol, servers, filtered_servers
+            self.protocol, servers, filtered_servers
         )
         logger.info("Certificate, domain and entry ip were fetched.")
 
@@ -741,6 +716,7 @@ class CLIWrapper():
                 )
                 self.connect_option = "servername"
                 self.connect_option_value = servername
+                self.protocol = protocol
 
             return self.CLI_CONNECT_DICT[self.connect_option](
                 self.session,

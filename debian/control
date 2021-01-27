@@ -8,6 +8,8 @@ X-Python3-Version: >= 3.5
 
 Package: protonvpn-cli
 Architecture: all
+Homepage: https://github.com/ProtonVPN
+Section: net
 Depends: ${python3:Depends}, ${misc:Depends}, python3-dialog, python3-protonvpn-nm-lib (>=0.3.0)
 Description: ProtonVPN CLI (Python 3)
  Package installs official ProtonVPN CLI.
