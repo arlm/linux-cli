@@ -42,7 +42,12 @@ image-arch: src = archlinux
 
 ## Make remote image form a branch make image branch=<branchName> (master default)
 image: requirements.txt docker-source
-	docker build -t $(NAME_IMAGE):$(TAG_IMAGE) -f "$(DOCKERFILE_BUILD)" .
+	docker build -t $(NAME_IMAGE):$(TAG_IMAGE) -f "$(DOCKERFILE_BUILD)" \
+	--network=host \
+	--build-arg git_repo_lib=$(GIT_REPO_LIB) \
+	--build-arg git_repo_client=$(GIT_REPO_CLIENT) \
+	--build-arg git_branch=$(GIT_BRANCH) \
+	.
 	docker push $(NAME_IMAGE):$(TAG_IMAGE)
 	docker tag $(NAME_IMAGE):$(TAG_IMAGE) $(NAME_IMAGE):$(TAG_IMAGE)
 
@@ -61,8 +66,12 @@ latest:
 
 ## Build image on local -> name nm-core:latest
 local: docker-source
-	# docker build -t "$(NAME_IMAGE)" -f "$(DOCKERFILE_BUILD)" .
-	docker build -t $(NAME_IMAGE) -f "$(DOCKERFILE_BUILD)" .
+		docker build -t $(NAME_IMAGE):$(TAG_IMAGE) -f "$(DOCKERFILE_BUILD)" \
+	--network=host \
+	--build-arg git_repo_lib=$(GIT_REPO_LIB) \
+	--build-arg git_repo_client=$(GIT_REPO_CLIENT) \
+	--build-arg git_branch=$(GIT_BRANCH) \
+	.
 	@ rm -rf __SOURCE_APP || true
 local: NAME_IMAGE = protonvpn-cli:latest
 
