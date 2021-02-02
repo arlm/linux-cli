@@ -511,12 +511,17 @@ class CLIWrapper():
         (
             certificate_fp,
             matching_domain,
-            entry_ip
+            entry_ip,
+            server_label
         ) = self.server_manager.generate_server_certificate(
             servername, domain, server_feature,
             self.protocol, servers, filtered_servers
         )
         logger.info("Certificate, domain and entry ip were fetched.")
+
+        if server_label is not None:
+            openvpn_username = openvpn_username + "+b:" + server_label
+            logger.info("Appending server label")
 
         self.add_vpn_connection(
             certificate_fp, openvpn_username, openvpn_password,
