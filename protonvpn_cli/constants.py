@@ -1,4 +1,4 @@
-APP_VERSION = "3.2.1"
+APP_VERSION = "3.3.0"
 MAIN_CLI_HELP = """
 ProtonVPN CLI v{}
 
