@@ -1,3 +1,9 @@
+protonvpn-cli (3.3.0-1) unstable; urgency=low
+
+  * Apply server label if it exists
+
+ -- Proton Technologies AG <opensource@proton.me>  Mon, 25 Jan 2021 10:26:21 +0000
+
 protonvpn-cli (3.2.1-2) unstable; urgency=low
 
   * Hotfix: reconnect command bug fixed
