@@ -8,10 +8,7 @@ ENV git_branch=${git_branch:-GIT_BRANCH}
 
 ARG pkgname
 ENV pkgname=${pkgname:-protonvpn-cli}
-RUN pacman -Syu --noconfirm
-
-RUN pacman -S --noconfirm \
-    gcc \
+RUN pacman -Syu --noconfirm \
     sudo \
     git \
     pacman-contrib \
@@ -45,9 +42,8 @@ RUN pacman -S --noconfirm \
     && useradd -ms /bin/bash user \
     && usermod -a -G wheel user \
     && usermod -a -G network user \
-    && echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
-RUN git clone --single-branch --branch $git_branch $git_repo_client \
+    && echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && git clone --single-branch --branch $git_branch $git_repo_client \
     && cd proton-python-client && pip3 install -e . \
     && rm -rf .git \
     && cd .. \
