@@ -25,11 +25,11 @@ class ProtonVPNDialog:
             tuple: (servername, protocol)
         """
         servers = protonvpn._get_server_list()
-        filtered_servers = protonvpn._filter_servers(
+        filtered_servers = protonvpn._get_filtered_servers(
             servers
         )
 
-        countries = protonvpn._generate_country_servername_dict(
+        countries = protonvpn._get_country_with_matching_servername(
             filtered_servers
         )
 
@@ -137,7 +137,7 @@ class ProtonVPNDialog:
 
         non_match_tier_servers = {}
         match_tier_servers = {}
-        user_tier = protonvpn._get_user_tier()
+        user_tier = protonvpn._get_user_tier().value
 
         for server in country_servers:
 

@@ -13,8 +13,8 @@ from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
                                     KillswitchStatusEnum,
                                     NetshieldTranslationEnum,
                                     NetworkManagerConnectionTypeEnum,
-                                    ProtocolImplementationEnum, ServerInfoEnum,
-                                    ServerTierEnum, UserSettingStatusEnum)
+                                    ProtocolEnum, ProtocolImplementationEnum,
+                                    ServerInfoEnum, ServerTierEnum)
 from protonvpn_nm_lib.logger import logger
 
 from .cli_dialog import ProtonVPNDialog
@@ -116,7 +116,7 @@ class CLIWrapper():
             connection_information = protonvpn._setup_connection(
                 connection_type=connect_type,
                 connection_type_extra_arg=connect_type_extra_arg,
-                protocol=args.protocol
+                protocol=protocol
             )
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
@@ -155,7 +155,7 @@ class CLIWrapper():
         """Reconnect to previously connected server."""
         print("Gathering previous ProtonVPN connection data.")
         try:
-            connection_information = protonvpn._setup_reconnect()
+            connection_information = protonvpn._setup_reconnection()
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print("\n{}".format(e))
@@ -282,7 +282,7 @@ class CLIWrapper():
 
     def set_protocol(self, protocol):
         try:
-            protonvpn._set_protocol(protocol)
+            protonvpn._set_protocol(ProtocolEnum(protocol))
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print(e)
@@ -303,7 +303,7 @@ class CLIWrapper():
         logger.info("Setting dns to automatic")
 
         try:
-            protonvpn._set_dns(UserSettingStatusEnum.ENABLED)
+            protonvpn._set_automatic_dns()
         except Exception as e:
             logger.exception(e)
             print(e)
@@ -324,7 +324,7 @@ class CLIWrapper():
             return
 
         for dns_server_ip in dns_ip_list:
-            if not protonvpn._is_valid_ip(dns_server_ip):
+            if not protonvpn._is_valid_dns_ipv4(dns_server_ip):
                 logger.error("{} is an invalid IP".format(dns_server_ip))
                 print(
                     "\n{0} is invalid. "
@@ -335,7 +335,7 @@ class CLIWrapper():
                 return
 
         try:
-            protonvpn._set_dns(UserSettingStatusEnum.CUSTOM, dns_ip_list)
+            protonvpn._set_custom_dns(dns_ip_list)
         except Exception as e:
             logger.exception(e)
             print(e)
@@ -350,7 +350,7 @@ class CLIWrapper():
         print(confirmation_message)
 
     def list_configurations(self, _):
-        user_settings_dict = protonvpn._get_user_settings(raw_format=False)
+        user_settings_dict = protonvpn._get_user_settings()
         status_to_print = dedent("""
             ProtonVPN User Settings
             ---------------------------
@@ -398,7 +398,7 @@ class CLIWrapper():
             return
 
         logger.info("Gathering connection information")
-        conn_status_dict = protonvpn._get_connection_status()
+        conn_status_dict = protonvpn._get_active_connection_status()
         server_info_dict = conn_status_dict.pop(
             ConnectionStatusEnum.SERVER_INFORMATION
         )
