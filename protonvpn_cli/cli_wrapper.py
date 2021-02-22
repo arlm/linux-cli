@@ -183,7 +183,6 @@ class CLIWrapper():
                 ].upper(),
             )
         )
-        connect_response = protonvpn._connect()
 
         connect_response = protonvpn._connect()
 
