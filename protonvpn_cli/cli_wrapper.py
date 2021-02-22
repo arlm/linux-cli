@@ -411,9 +411,9 @@ class CLIWrapper():
 
     def status(self):
         """Proxymethod to diplay connection status."""
-        if not protonvpn._get_protonvpn_connection(
+        if len(protonvpn._get_protonvpn_connection(
             NetworkManagerConnectionTypeEnum.ACTIVE
-        )[0]:
+        )) == 0:
             print("\nNo active ProtonVPN connection.")
             return
 
