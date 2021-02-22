@@ -1,9 +1,9 @@
-protonvpn-cli (3.3.1-1) unstable; urgency=low
+protonvpn-cli (3.4.0-2) unstable; urgency=low
 
   * Apply server label if it exists
-  * Update change for protonvpn-nm-lib 0.4.2
+  * Add support for protonvpn-nm-lib 0.5.0
 
- -- Proton Technologies AG <opensource@proton.me>  Thu, 25 Feb 2021 12:00:00 +0000
+ -- Proton Technologies AG <opensource@proton.me>  Mon, 22 Feb 2021 16:00:00 +0000
 
 protonvpn-cli (3.2.1-2) unstable; urgency=low
 

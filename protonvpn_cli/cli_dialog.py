@@ -3,10 +3,10 @@ import sys
 
 from dialog import Dialog
 from protonvpn_nm_lib import protonvpn
-from protonvpn_nm_lib.logger import logger
+from protonvpn_nm_lib.constants import SERVER_TIERS, SUPPORTED_FEATURES
 from protonvpn_nm_lib.country_codes import country_codes
-from protonvpn_nm_lib.enums import ServerInfoEnum, ProtocolEnum, ServerTierEnum
-from protonvpn_nm_lib.constants import SUPPORTED_FEATURES, SERVER_TIERS
+from protonvpn_nm_lib.enums import ProtocolEnum, ServerTierEnum
+from protonvpn_nm_lib.logger import logger
 
 
 class ProtonVPNDialog:
@@ -25,7 +25,7 @@ class ProtonVPNDialog:
             tuple: (servername, protocol)
         """
         servers = protonvpn._get_server_list()
-        filtered_servers = protonvpn._get_filtered_servers(
+        filtered_servers = protonvpn._get_filtered_server_list(
             servers
         )
 
@@ -78,8 +78,6 @@ class ProtonVPNDialog:
 
         Args:
             countries (dict): {country_code: servername}
-            server_manager (ServerManager): instance of ServerManager
-            servers (list): contains server information about each country
             country (string): country code (PT, SE, DK, etc)
         Returns:
             string: servername (PT#8, SE#5, DK#10, etc)
@@ -92,10 +90,10 @@ class ProtonVPNDialog:
             raise Exception(e)
 
         for servername in country_servers:
-            server = protonvpn._get_server_information(servername)
-            load = str(server[ServerInfoEnum.LOAD]).rjust(3, " ")
-            feature = SUPPORTED_FEATURES[server[ServerInfoEnum.FEATURES].pop()]
-            tier = SERVER_TIERS[ServerTierEnum(server[ServerInfoEnum.TIER])]
+            server = protonvpn._get_server_information(servername=servername)
+            load = str(server.LOAD).rjust(3, " ")
+            feature = SUPPORTED_FEATURES[server.FEATURE_LIST.pop()]
+            tier = SERVER_TIERS[ServerTierEnum(server.TIER)]
 
             choices.append(
                 (
@@ -140,9 +138,8 @@ class ProtonVPNDialog:
         user_tier = protonvpn._get_user_tier().value
 
         for server in country_servers:
-
             _server = protonvpn._get_server_information(server)
-            server_tier = _server[ServerInfoEnum.TIER]
+            server_tier = _server.TIER
 
             if server_tier == user_tier:
                 match_tier_servers[server] = server_tier
