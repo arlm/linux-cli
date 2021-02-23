@@ -47,7 +47,7 @@ class ProtonVPNDialog:
         protocol = dialog.display_protocol()
         logger.info("Selected protocol: \"{}\"".format(protocol))
 
-        subprocess.run("clear")
+        subprocess.run(["clear"])
         return server, protocol
 
     def display_country(self, countries):
@@ -126,7 +126,7 @@ class ProtonVPNDialog:
         if code == "ok":
             return tag
         else:
-            subprocess.run("clear")
+            subprocess.run(["clear"])
             print("Canceled.")
             sys.exit(1)
 
