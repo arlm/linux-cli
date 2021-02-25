@@ -1,5 +1,5 @@
 %define unmangled_name protonvpn-cli
-%define version 3.3.0
+%define version 3.3.1
 %define release 1
 
 Prefix: %{_prefix}
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Thu Feb 25 2021 Proton Technologies AG <opensource@proton.me> 3.3.1-1
+- Update change for protonvpn-nm-lib 0.4.2
+
 * Tue Feb 02 2021 Proton Technologies AG <opensource@proton.me> 3.3.0-1
 - Apply server label if it exists
 
