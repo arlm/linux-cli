@@ -47,8 +47,11 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Mon Feb 22 2021 Proton Technologies AG <opensource@proton.me> 3.4.0-2
+* Mon Feb 25 2021 Proton Technologies AG <opensource@proton.me> 3.4.0-2
 - Add support for protonvpn-nm-lib 0.5.0
+
+* Thu Feb 25 2021 Proton Technologies AG <opensource@proton.me> 3.3.1-1
+- Update change for protonvpn-nm-lib 0.4.2
 
 * Tue Feb 02 2021 Proton Technologies AG <opensource@proton.me> 3.3.0-1
 - Apply server label if it exists
