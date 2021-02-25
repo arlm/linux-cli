@@ -503,7 +503,7 @@ class CLIWrapper():
         logger.info("OpenVPN credentials fetched")
 
         (
-            servername, domain,
+            servername,
             server_feature,
             filtered_servers, servers
         ) = self.get_connection_configurations()
@@ -514,7 +514,7 @@ class CLIWrapper():
             entry_ip,
             server_label
         ) = self.server_manager.generate_server_certificate(
-            servername, domain, server_feature,
+            servername, server_feature,
             self.protocol, servers, filtered_servers
         )
         logger.info("Certificate, domain and entry ip were fetched.")
