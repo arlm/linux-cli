@@ -1,9 +1,9 @@
-import os
 import sys
 
 from dialog import Dialog
 from protonvpn_nm_lib import protonvpn
 from protonvpn_nm_lib.constants import SERVER_TIERS, SUPPORTED_FEATURES
+from protonvpn_nm_lib.core.subprocess_wrapper import subprocess
 from protonvpn_nm_lib.country_codes import country_codes
 from protonvpn_nm_lib.enums import ProtocolEnum, ServerTierEnum
 from protonvpn_nm_lib.logger import logger
@@ -47,7 +47,7 @@ class ProtonVPNDialog:
         protocol = dialog.display_protocol()
         logger.info("Selected protocol: \"{}\"".format(protocol))
 
-        os.system("clear")
+        subprocess.run(["clear"])
         return server, protocol
 
     def display_country(self, countries):
@@ -126,7 +126,7 @@ class ProtonVPNDialog:
         if code == "ok":
             return tag
         else:
-            os.system("clear")
+            subprocess.run(["clear"])
             print("Canceled.")
             sys.exit(1)
 

@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.4.0
-%define release 2
+%define release 3
 
 Prefix: %{_prefix}
 
@@ -47,8 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Mon Feb 25 2021 Proton Technologies AG <opensource@proton.me> 3.4.0-2
+* Mon Feb 22 2021 Proton Technologies AG <opensource@proton.me> 3.4.0-3
 - Add support for protonvpn-nm-lib 0.5.0
+- Replace os.system for custom subprocess wrapper
 
 * Thu Feb 25 2021 Proton Technologies AG <opensource@proton.me> 3.3.1-1
 - Update change for protonvpn-nm-lib 0.4.2
