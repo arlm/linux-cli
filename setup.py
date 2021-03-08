@@ -21,7 +21,7 @@ setup(
     author_email="contact@protonvpn.com",
     long_description=long_description,
     install_requires=[
-        "protonvpn-nm-lib~=0.4.0", "pythondialog"
+        "protonvpn-nm-lib~=0.5.0", "pythondialog"
     ],
     include_package_data=True,
     license="GPLv3",
