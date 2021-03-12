@@ -1,21 +1,20 @@
 import sys
 
 from dialog import Dialog
-from protonvpn_nm_lib import protonvpn
+from protonvpn_nm_lib import exceptions
 from protonvpn_nm_lib.constants import SERVER_TIERS, SUPPORTED_FEATURES
 from protonvpn_nm_lib.core.subprocess_wrapper import subprocess
 from protonvpn_nm_lib.country_codes import country_codes
-from protonvpn_nm_lib.enums import ProtocolEnum, ServerTierEnum
-from protonvpn_nm_lib.logger import logger
+from protonvpn_nm_lib.enums import ProtocolEnum, ServerTierEnum, FeatureEnum
+from .logger import logger
 
 
 class ProtonVPNDialog:
 
-    def __init__(self):
-        pass
+    def __init__(self, vpn_client):
+        self.vpn_client = vpn_client
 
-    @staticmethod
-    def start():
+    def start(self):
         """Connect to server with a dialog menu.
 
         Args:
@@ -24,27 +23,38 @@ class ProtonVPNDialog:
         Returns:
             tuple: (servername, protocol)
         """
-        servers = protonvpn._get_server_list()
-        filtered_servers = protonvpn._get_filtered_server_list(
-            servers
-        )
+        self.server_list = self.vpn_client.get_server_list()
+        self.server_filter = self.vpn_client.get_server_filter()
+        self.country = self.vpn_client.get_country()
+        self.user = self.vpn_client.get_user()
+        self.session = self.vpn_client.get_session()
+        self.session.reload_keyring_properties()
 
-        countries = protonvpn._get_country_with_matching_servername(
+        self.vpn_client.ensure_connectivity()
+        try:
+            self.session.refresh_servers()
+        except(Exception, exceptions.ProtonVPNException) as e:
+            logger.exception(e)
+
+        raw_servers = self.server_list.get_cached_serverlist()
+        self.server_list.reload_servers(raw_servers)
+        filtered_servers = self.server_filter.get_default_filtered_servers(
+            self.server_list.servers, self.user.tier
+        )
+        countries = self.country.get_dict_with_country_servername(
             filtered_servers
         )
 
-        dialog = ProtonVPNDialog()
-
         # Fist dialog
-        country = dialog.display_country(countries)
+        country = self.display_country(countries)
         logger.info("Selected country: \"{}\"".format(country))
 
         # Second dialog
-        server = dialog.display_servers(country, countries)
+        server = self.display_servers(country, countries)
         logger.info("Selected server: \"{}\"".format(server))
 
         # Third dialog
-        protocol = dialog.display_protocol()
+        protocol = self.display_protocol()
         logger.info("Selected protocol: \"{}\"".format(protocol))
 
         subprocess.run(["clear"])
@@ -65,9 +75,10 @@ class ProtonVPNDialog:
         for country in sorted(countries.keys()):
             country_code = [
                 cc
+                if _country == country
+                else country
                 for cc, _country
                 in country_codes.items()
-                if _country == country
             ].pop()
             choices.append((country, "{}".format(country_code)))
 
@@ -90,10 +101,12 @@ class ProtonVPNDialog:
             raise Exception(e)
 
         for servername in country_servers:
-            server = protonvpn._get_server_information(servername=servername)
-            load = str(server.LOAD).rjust(3, " ")
-            feature = SUPPORTED_FEATURES[server.FEATURE_LIST.pop()]
-            tier = SERVER_TIERS[ServerTierEnum(server.TIER)]
+            server = self.server_filter.get_server_by_name(
+                self.server_list.servers, servername
+            )
+            load = str(int(server.load)).rjust(3, " ")
+            feature = SUPPORTED_FEATURES[FeatureEnum(server.features)]
+            tier = SERVER_TIERS[ServerTierEnum(server.tier)]
 
             choices.append(
                 (
@@ -135,11 +148,14 @@ class ProtonVPNDialog:
 
         non_match_tier_servers = {}
         match_tier_servers = {}
-        user_tier = protonvpn._get_user_tier().value
+        user_tier = self.user.tier
 
         for server in country_servers:
-            _server = protonvpn._get_server_information(server)
-            server_tier = _server.TIER
+            _server = self.server_filter.get_server_by_name(
+                self.server_list.servers,
+                server
+            )
+            server_tier = _server.tier
 
             if server_tier == user_tier:
                 match_tier_servers[server] = server_tier
@@ -162,4 +178,4 @@ class ProtonVPNDialog:
             servername
             for servername, server_tier
             in match_tier_servers.items()
-            ]
+        ]

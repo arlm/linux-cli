@@ -11,14 +11,8 @@ from .constants import (APP_VERSION, CONFIG_HELP, CONNECT_HELP, KS_HELP,
                         LOGIN_HELP, MAIN_CLI_HELP, NETSHIELD_HELP)
 
 
-class ProtonVPNCLI():
+class ProtonVPNCLI:
     def __init__(self):
-        logger.info(
-            "ProtonVPN CLI v{} "
-            "(protonvpn-nm-lib v{}; proton-client v{})".format(
-                APP_VERSION, lib_version, proton_version
-            )
-        )
         parser = argparse.ArgumentParser(add_help=False)
         parser.add_argument("command", nargs="?")
         parser.add_argument(
