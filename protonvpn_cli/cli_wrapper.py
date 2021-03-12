@@ -189,15 +189,18 @@ class CLIWrapper:
 
         connect_response = self.vpn_client.connect()
 
-        state = connect_response[
+        logger.info("Dbus response: {}".format(connect_response))
+
+        response = connect_response[
             DbusMonitorResponseEnum.RESPONSE
-        ][DbusMonitorResponseEnum.STATE]
+        ]
+        state = response[DbusMonitorResponseEnum.STATE]
 
         if state == DbusVPNConnectionStateEnum.IS_ACTIVE:
             print("\nSuccessfully connected to ProtonVPN.")
         else:
             print("\nUnable to connect to ProtonVPN: {}".format(
-                connect_response[DbusMonitorResponseEnum.MESSAGE]
+                response[DbusMonitorResponseEnum.MESSAGE]
             ))
 
     def set_killswitch(self, args):
