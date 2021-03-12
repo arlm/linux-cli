@@ -261,7 +261,8 @@ class ProtonVPNCLI:
             )
             args = parser.parse_args(sys.argv[4:])
             logger.info("Config DNS command: {}".format(args))
-            if not args.ip and not args.list:
+
+            if not args.ip:
                 print(CONFIG_HELP)
                 parser.exit()
 
