@@ -12,7 +12,7 @@ from .logger import logger
 class ProtonVPNDialog:
 
     def __init__(self, vpn_client):
-        self.vpn_client = vpn_client
+        self.protonvpn = vpn_client
 
     def start(self):
         """Connect to server with a dialog menu.
@@ -23,14 +23,15 @@ class ProtonVPNDialog:
         Returns:
             tuple: (servername, protocol)
         """
-        self.server_list = self.vpn_client.get_server_list()
-        self.server_filter = self.vpn_client.get_server_filter()
-        self.country = self.vpn_client.get_country()
-        self.user = self.vpn_client.get_user()
-        self.session = self.vpn_client.get_session()
+        self.server_list = self.protonvpn.server_list
+        self.server_filter = self.protonvpn.server_filter
+        self.country = self.protonvpn.country
+        self.user = self.protonvpn.protonvpn_user
+        self.session = self.protonvpn.session
+
         self.session.reload_keyring_properties()
 
-        self.vpn_client.ensure_connectivity()
+        self.protonvpn.ensure_connectivity()
         try:
             self.session.refresh_servers()
         except(Exception, exceptions.ProtonVPNException) as e:

@@ -6,7 +6,7 @@ from textwrap import dedent
 
 from proton.constants import VERSION as proton_version
 from protonvpn_nm_lib import exceptions
-from protonvpn_nm_lib.client import Client
+from protonvpn_nm_lib.api import protonvpn
 from protonvpn_nm_lib.constants import APP_VERSION as lib_version
 from protonvpn_nm_lib.constants import (SERVER_TIERS, SUPPORTED_FEATURES,
                                         SUPPORTED_PROTOCOLS)
@@ -66,13 +66,13 @@ class CLIWrapper:
             p2p=ConnectionTypeEnum.PEER2PEER,
             tor=ConnectionTypeEnum.TOR,
         )
-        self.vpn_client = Client()
-        self.user_settings = self.vpn_client.get_user_settings()
-        self.dialog = ProtonVPNDialog(self.vpn_client)
+        self.protonvpn = protonvpn
+        self.user_settings = self.protonvpn.settings
+        self.dialog = ProtonVPNDialog(self.protonvpn)
 
     def login(self, username=None):
         """Proxymethod to login user with ProtonVPN credentials."""
-        if self.vpn_client.check_session_exists():
+        if self.protonvpn.check_session_exists():
             print("\nYou are already logged in.")
             return
 
@@ -80,7 +80,7 @@ class CLIWrapper:
         logger.info("Credentials provided, attempting to login")
 
         try:
-            self.vpn_client.login(username, password)
+            self.protonvpn.login(username, password)
         except (exceptions.ProtonVPNException, Exception) as e:
             print("\n{}".format(e))
             return
@@ -91,7 +91,7 @@ class CLIWrapper:
         """Proxymethod to logout user."""
         print("Attempting to logout.")
         try:
-            self.vpn_client.logout()
+            self.protonvpn.logout()
         except exceptions.KeyringDataNotFound as e:
             print("\n{}".format(e))
             return
@@ -107,7 +107,7 @@ class CLIWrapper:
 
     def connect(self, args):
         """Proxymethod to connect to ProtonVPN."""
-        if not self.vpn_client.check_session_exists():
+        if not self.protonvpn.check_session_exists():
             print("\nNo session was found. Please login first.")
             return
 
@@ -133,7 +133,7 @@ class CLIWrapper:
         print("Setting up ProtonVPN.")
 
         try:
-            self.vpn_client.setup_connection(
+            self.protonvpn.setup_connection(
                 connection_type=connect_type,
                 connection_type_extra_arg=connect_type_extra_arg,
                 protocol=protocol
@@ -150,7 +150,7 @@ class CLIWrapper:
         print("Disconnecting from ProtonVPN.")
 
         try:
-            self.vpn_client.disconnect()
+            self.protonvpn.disconnect()
         except exceptions.ConnectionNotFound as e:
             print("\n{}".format(e))
             return
@@ -165,7 +165,7 @@ class CLIWrapper:
         """Reconnect to previously connected server."""
         print("Gathering previous ProtonVPN connection data.")
         try:
-            self.vpn_client.setup_reconnect()
+            self.protonvpn.setup_reconnect()
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print("\n{}".format(e))
@@ -174,7 +174,7 @@ class CLIWrapper:
         self._connect(True)
 
     def _connect(self, is_reconnecting=False):
-        connection_metadata = self.vpn_client.get_connection_metadata()
+        connection_metadata = self.protonvpn.get_connection_metadata()
         print(
             "{} to ProtonVPN on {} with {}.".format(
                 "Reconnecting" if is_reconnecting else "Connecting",
@@ -187,7 +187,7 @@ class CLIWrapper:
             )
         )
 
-        connect_response = self.vpn_client.connect()
+        connect_response = self.protonvpn.connect()
 
         logger.info("Dbus response: {}".format(connect_response))
 
@@ -242,7 +242,7 @@ class CLIWrapper:
         logger.info("Setting netshield to: {}".format(args))
 
         restart_vpn_message = ""
-        if self.vpn_client.get_active_protonvpn_connection():
+        if self.protonvpn.get_active_protonvpn_connection():
             restart_vpn_message = " Please restart your VPN connection "\
                 "to enable NetShield."
 
@@ -410,15 +410,14 @@ class CLIWrapper:
 
     def status(self):
         """Proxymethod to diplay connection status."""
-        if not self.vpn_client.get_active_protonvpn_connection():
+        if not self.protonvpn.get_active_protonvpn_connection():
             print("\nNo active ProtonVPN connection.")
             return
 
-        session = self.vpn_client.get_session()
-        session.refresh_servers()
+        self.protonvpn.session.refresh_servers()
 
         logger.info("Gathering connection information")
-        conn_status_dict = self.vpn_client.get_connection_status()
+        conn_status_dict = self.protonvpn.get_connection_status()
         server = conn_status_dict.pop(
             ConnectionStatusEnum.SERVER_INFORMATION
         )
@@ -429,12 +428,10 @@ class CLIWrapper:
             [SUPPORTED_FEATURES[server_feature_enum]]
         ) + "\n"
 
-        country = self.vpn_client.get_country()
-
-        entry_country = country.get_country_name(
+        entry_country = self.protonvpn.country.get_country_name(
             server.entry_country
         )
-        exit_country = country.get_country_name(
+        exit_country = self.protonvpn.country.get_country_name(
             server.exit_country
         )
 
