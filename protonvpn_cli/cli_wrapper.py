@@ -11,14 +11,14 @@ from protonvpn_nm_lib.constants import APP_VERSION as lib_version
 from protonvpn_nm_lib.constants import (SERVER_TIERS, SUPPORTED_FEATURES,
                                         SUPPORTED_PROTOCOLS)
 from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
+                                    ConnectionStartStatusEnum,
                                     ConnectionStatusEnum, ConnectionTypeEnum,
-                                    DbusMonitorResponseEnum,
-                                    DbusVPNConnectionStateEnum,
                                     DisplayUserSettingsEnum, FeatureEnum,
                                     KillswitchStatusEnum,
-                                    NetshieldTranslationEnum,
-                                    ProtocolEnum, ProtocolImplementationEnum,
-                                    ServerTierEnum, UserSettingStatusEnum)
+                                    NetshieldTranslationEnum, ProtocolEnum,
+                                    ProtocolImplementationEnum, ServerTierEnum,
+                                    UserSettingStatusEnum,
+                                    VPNConnectionStateEnum)
 
 from .cli_dialog import ProtonVPNDialog
 from .constants import APP_VERSION
@@ -67,7 +67,7 @@ class CLIWrapper:
             tor=ConnectionTypeEnum.TOR,
         )
         self.protonvpn = protonvpn
-        self.user_settings = self.protonvpn.settings
+        self.user_settings = self.protonvpn.get_settings()
         self.dialog = ProtonVPNDialog(self.protonvpn)
 
     def login(self, username=None):
@@ -151,8 +151,11 @@ class CLIWrapper:
 
         try:
             self.protonvpn.disconnect()
-        except exceptions.ConnectionNotFound as e:
-            print("\n{}".format(e))
+        except exceptions.ConnectionNotFound:
+            print(
+                "\nNo ProtonVPN connection was found. "
+                "Please connect first to ProtonVPN."
+            )
             return
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
@@ -186,21 +189,17 @@ class CLIWrapper:
                 ].upper(),
             )
         )
-
         connect_response = self.protonvpn.connect()
 
         logger.info("Dbus response: {}".format(connect_response))
 
-        response = connect_response[
-            DbusMonitorResponseEnum.RESPONSE
-        ]
-        state = response[DbusMonitorResponseEnum.STATE]
+        state = connect_response[ConnectionStartStatusEnum.STATE]
 
-        if state == DbusVPNConnectionStateEnum.IS_ACTIVE:
+        if state == VPNConnectionStateEnum.IS_ACTIVE:
             print("\nSuccessfully connected to ProtonVPN.")
         else:
             print("\nUnable to connect to ProtonVPN: {}".format(
-                response[DbusMonitorResponseEnum.MESSAGE]
+                connect_response[ConnectionStartStatusEnum.MESSAGE]
             ))
 
     def set_killswitch(self, args):
@@ -309,7 +308,7 @@ class CLIWrapper:
 
     def set_protocol(self, protocol):
         try:
-            self.user_settings.set_protocol = ProtocolEnum(protocol)
+            self.user_settings.protocol = ProtocolEnum(protocol)
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print(e)
@@ -414,13 +413,12 @@ class CLIWrapper:
             print("\nNo active ProtonVPN connection.")
             return
 
-        self.protonvpn.session.refresh_servers()
-
         logger.info("Gathering connection information")
         conn_status_dict = self.protonvpn.get_connection_status()
         server = conn_status_dict.pop(
             ConnectionStatusEnum.SERVER_INFORMATION
         )
+
         server_feature_enum = FeatureEnum(server.features)
         tier_enum = ServerTierEnum(server.tier)
 

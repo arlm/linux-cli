@@ -11,8 +11,8 @@ from .logger import logger
 
 class ProtonVPNDialog:
 
-    def __init__(self, vpn_client):
-        self.protonvpn = vpn_client
+    def __init__(self, protonvpn):
+        self.protonvpn = protonvpn
 
     def start(self):
         """Connect to server with a dialog menu.
@@ -23,27 +23,14 @@ class ProtonVPNDialog:
         Returns:
             tuple: (servername, protocol)
         """
-        self.server_list = self.protonvpn.server_list
-        self.server_filter = self.protonvpn.server_filter
-        self.country = self.protonvpn.country
-        self.user = self.protonvpn.protonvpn_user
-        self.session = self.protonvpn.session
-
-        self.session.reload_keyring_properties()
+        self.session = self.protonvpn.get_session()
+        self.servers = self.session.servers
+        self.country = self.protonvpn.get_country()
+        self.user_settings = self.protonvpn.get_settings()
 
         self.protonvpn.ensure_connectivity()
-        try:
-            self.session.refresh_servers()
-        except(Exception, exceptions.ProtonVPNException) as e:
-            logger.exception(e)
-
-        raw_servers = self.server_list.get_cached_serverlist()
-        self.server_list.reload_servers(raw_servers)
-        filtered_servers = self.server_filter.get_default_filtered_servers(
-            self.server_list.servers, self.user.tier
-        )
         countries = self.country.get_dict_with_country_servername(
-            filtered_servers
+            self.servers
         )
 
         # Fist dialog
@@ -96,14 +83,14 @@ class ProtonVPNDialog:
         """
         choices = []
 
-        try:
-            country_servers = self.sort_servers(country, countries)
-        except Exception as e:
-            raise Exception(e)
+        # try:
+        country_servers = self.sort_servers(country, countries)
+        # except Exception as e:
+        #     raise Exception(e)
 
         for servername in country_servers:
-            server = self.server_filter.get_server_by_name(
-                self.server_list.servers, servername
+            server = self.protonvpn.config_for_server_with_servername(
+                servername
             )
             load = str(int(server.load)).rjust(3, " ")
             feature = SUPPORTED_FEATURES[FeatureEnum(server.features)]
@@ -149,18 +136,21 @@ class ProtonVPNDialog:
 
         non_match_tier_servers = {}
         match_tier_servers = {}
-        user_tier = self.user.tier
+        user_tier = self.session.vpn_tier
 
         for server in country_servers:
-            _server = self.server_filter.get_server_by_name(
-                self.server_list.servers,
-                server
-            )
+            logger.debug("Servename: {}".format(server))
+            try:
+                _server = self.protonvpn.config_for_server_with_servername(
+                    server
+                )
+            except exceptions.EmptyServerListError:
+                continue
+
             server_tier = _server.tier
 
             if server_tier == user_tier:
                 match_tier_servers[server] = server_tier
-                continue
             elif (
                 (server_tier > user_tier or server_tier < user_tier)
                 and not server_tier == 3
