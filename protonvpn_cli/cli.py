@@ -11,14 +11,8 @@ from .constants import (APP_VERSION, CONFIG_HELP, CONNECT_HELP, KS_HELP,
                         LOGIN_HELP, MAIN_CLI_HELP, NETSHIELD_HELP)
 
 
-class ProtonVPNCLI():
+class ProtonVPNCLI:
     def __init__(self):
-        logger.info(
-            "ProtonVPN CLI v{} "
-            "(protonvpn-nm-lib v{}; proton-client v{})".format(
-                APP_VERSION, lib_version, proton_version
-            )
-        )
         parser = argparse.ArgumentParser(add_help=False)
         parser.add_argument("command", nargs="?")
         parser.add_argument(
@@ -95,8 +89,8 @@ class ProtonVPNCLI():
         parser.add_argument(
             "-p", "--protocol", help="Connect via specified protocol.",
             choices=[
-                ProtocolEnum.TCP,
-                ProtocolEnum.UDP,
+                ProtocolEnum.TCP.value,
+                ProtocolEnum.UDP.value,
             ], metavar="", type=str.lower
         )
         parser.add_argument(
@@ -265,18 +259,14 @@ class ProtonVPNCLI():
                 help="Custom DNS IPs.",
                 nargs="+",
             )
-            group.add_argument(
-                "--list",
-                help="List custom DNS IPs.",
-                action="store_true"
-            )
             args = parser.parse_args(sys.argv[4:])
             logger.info("Config DNS command: {}".format(args))
-            if not args.ip and not args.list:
-                print(CONFIG_HELP)
-                sys.exit(1)
 
-            self.cli_wrapper.configure(args)
+            if not args.ip:
+                print(CONFIG_HELP)
+                parser.exit()
+
+            self.cli_wrapper.configurations_menu(args)
             parser.exit()
 
         parser = argparse.ArgumentParser(
@@ -301,13 +291,18 @@ class ProtonVPNCLI():
             help="Protocol settings.",
             nargs=1,
             choices=[
-                ProtocolEnum.TCP,
-                ProtocolEnum.UDP,
+                ProtocolEnum.TCP.value,
+                ProtocolEnum.UDP.value,
             ]
         )
         group.add_argument(
             "-d", "--default",
             help="Reset do default configurations.",
+            action="store_true"
+        )
+        group.add_argument(
+            "-l", "--list",
+            help="List user settings.",
             action="store_true"
         )
 
@@ -322,10 +317,11 @@ class ProtonVPNCLI():
                 and not args.protocol
                 and not args.help
                 and not args.default
+                and not args.list
             )
         ):
             print(CONFIG_HELP)
-            sys.exit(1)
+            parser.exit()
         elif (
             (
                 not args.protocol
@@ -339,5 +335,5 @@ class ProtonVPNCLI():
         ) and args.dns and args.dns.pop() == "custom":
             custom_dns()
 
-        self.cli_wrapper.configure(args2)
+        self.cli_wrapper.configurations_menu(args2)
         parser.exit()

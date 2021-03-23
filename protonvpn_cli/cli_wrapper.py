@@ -1,57 +1,50 @@
-import datetime
 import getpass
 import inspect
 import os
-import sys
 import time
 from textwrap import dedent
 
-from dbus.mainloop.glib import DBusGMainLoop
-from gi.repository import GLib
+from proton.constants import VERSION as proton_version
 from protonvpn_nm_lib import exceptions
-from protonvpn_nm_lib.constants import (FLAT_SUPPORTED_PROTOCOLS,
-                                        KILLSWITCH_STATUS_TEXT,
-                                        SERVER_TIERS,
-                                        SUPPORTED_FEATURES,
-                                        SUPPORTED_PROTOCOLS,
-                                        VIRTUAL_DEVICE_NAME)
+from protonvpn_nm_lib.api import protonvpn
+from protonvpn_nm_lib.constants import APP_VERSION as lib_version
+from protonvpn_nm_lib.constants import (SERVER_TIERS, SUPPORTED_FEATURES,
+                                        SUPPORTED_PROTOCOLS)
 from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
-                                    KillswitchStatusEnum, MetadataEnum,
+                                    ConnectionStartStatusEnum,
+                                    ConnectionStatusEnum, ConnectionTypeEnum,
+                                    DisplayUserSettingsEnum, FeatureEnum,
+                                    KillswitchStatusEnum,
+                                    NetshieldTranslationEnum, ProtocolEnum,
                                     ProtocolImplementationEnum, ServerTierEnum,
-                                    NetshieldTranslationEnum)
-from protonvpn_nm_lib.logger import logger
-from protonvpn_nm_lib.services import capture_exception
-from protonvpn_nm_lib.services.certificate_manager import CertificateManager
-from protonvpn_nm_lib.services.connection_manager import ConnectionManager
-from protonvpn_nm_lib.services.ipv6_leak_protection_manager import \
-    IPv6LeakProtectionManager
-from protonvpn_nm_lib.services.killswitch_manager import KillSwitchManager
-from protonvpn_nm_lib.services.reconnector_manager import ReconnectorManager
-from protonvpn_nm_lib.services.server_manager import ServerManager
-from protonvpn_nm_lib.services.user_configuration_manager import \
-    UserConfigurationManager
-from protonvpn_nm_lib.services.user_manager import UserManager
+                                    UserSettingStatusEnum,
+                                    VPNConnectionStateEnum)
 
-from .cli_configure import CLIConfigure
 from .cli_dialog import ProtonVPNDialog
-from .vpn_state_monitor import ProtonVPNStateMonitor
+from .constants import APP_VERSION
+from .logger import logger
 
 
-class CLIWrapper():
-    logger.info(
-        "\n"
-        + "---------------------"
-        + "----------------"
-        + "------------\n\n"
-        + "-----------\t"
-        + "Initialized protonvpn-cli"
-        + "\t-----------\n\n"
-        + "---------------------"
-        + "----------------"
-        + "------------"
-    )
-
+class CLIWrapper:
     def __init__(self):
+        logger.info(
+            "\n"
+            + "---------------------"
+            + "----------------"
+            + "------------\n\n"
+            + "-----------\t"
+            + "Initialized protonvpn-cli"
+            + "\t-----------\n\n"
+            + "---------------------"
+            + "----------------"
+            + "------------"
+        )
+        logger.info(
+            "ProtonVPN CLI v{} "
+            "(protonvpn-nm-lib v{}; proton-client v{})".format(
+                APP_VERSION, lib_version, proton_version
+            )
+        )
         if "SUDO_UID" in os.environ:
             print(
                 "\nRunning ProtonVPN as root is not supported and "
@@ -61,248 +54,183 @@ class CLIWrapper():
             user_input = input("Are you sure that you want to proceed (y/N): ")
             user_input = user_input.lower()
             if not user_input == "y":
-                sys.exit(1)
-
-        self.reconector_manager = ReconnectorManager()
-        self.user_conf_manager = UserConfigurationManager()
-        self.ks_manager = KillSwitchManager(self.user_conf_manager)
-        self.connection_manager = ConnectionManager()
-        self.user_manager = UserManager(self.user_conf_manager)
-        self.server_manager = ServerManager(
-            CertificateManager(), self.user_manager
-        )
-        self.ipv6_lp_manager = IPv6LeakProtectionManager()
-        self.protonvpn_dialog = ProtonVPNDialog(
-            self.server_manager, self.user_manager
-        )
+                return
+        self.DNS_REMINDER_MESSAGE = "These changes will apply " \
+            "the next time you connect to VPN."
         self.CLI_CONNECT_DICT = dict(
-            servername=self.server_manager.get_config_for_specific_server,
-            fastest=self.server_manager.get_config_for_fastest_server,
-            random=self.server_manager.get_config_for_random_server,
-            cc=self.server_manager.get_config_for_fastest_server_in_country,
-            sc=self.server_manager.get_config_for_fastest_server_with_specific_feature, # noqa
-            p2p=self.server_manager.get_config_for_fastest_server_with_specific_feature, # noqa
-            tor=self.server_manager.get_config_for_fastest_server_with_specific_feature, # noqa
+            servername=ConnectionTypeEnum.SERVERNAME,
+            fastest=ConnectionTypeEnum.FASTEST,
+            random=ConnectionTypeEnum.RANDOM,
+            cc=ConnectionTypeEnum.COUNTRY,
+            sc=ConnectionTypeEnum.SECURE_CORE,
+            p2p=ConnectionTypeEnum.PEER2PEER,
+            tor=ConnectionTypeEnum.TOR,
         )
+        self.protonvpn = protonvpn
+        self.user_settings = self.protonvpn.get_settings()
+        self.dialog = ProtonVPNDialog(self.protonvpn)
 
-        self.connect_option = None
-        self.connect_option_value = None
-
-    def connect(self, args):
-        """Proxymethod to connect to ProtonVPN."""
-
-        self.server_manager.killswitch_status = self.user_conf_manager.killswitch # noqa
-        exit_type = 1
-        protocol = self.determine_protocol(args)
-        self.session = self.get_existing_session(exit_type)
-
-        if (
-            args.servername
-            and not self.server_manager.is_servername_valid(args.servername)
-        ):
-            print(
-                "\nIllegalServername: Invalid servername {}".format(
-                    args.servername
-                )
-            )
-            sys.exit(1)
-        delattr(args, "help")
-        self.server_manager.validate_session(self.session)
-        self.remove_existing_connection()
-        self.check_internet_conn()
-
-        for cls_attr in inspect.getmembers(args):
-            if cls_attr[0] in self.CLI_CONNECT_DICT and cls_attr[1]:
-                self.connect_option = cls_attr[0]
-                if isinstance(cls_attr[1], bool):
-                    self.connect_option_value = cls_attr[0]
-                    break
-
-                self.connect_option_value = cls_attr[1]
-
-        self.protocol = protocol
-        conn_status = self.setup_connection()
-
-        print(
-            "Connecting to ProtonVPN on {} with {}...".format(
-                conn_status[ConnectionMetadataEnum.SERVER],
-                conn_status[ConnectionMetadataEnum.PROTOCOL].upper(),
-            )
-        )
-
-        self.connection_manager.start_connection()
-        DBusGMainLoop(set_as_default=True)
-        loop = GLib.MainLoop()
-        ProtonVPNStateMonitor(
-            VIRTUAL_DEVICE_NAME, loop, self.ks_manager,
-            self.user_conf_manager, self.connection_manager,
-            self.reconector_manager, self.session
-        )
-        loop.run()
-        sys.exit()
-
-    def disconnect(self):
-        """Proxymethod to disconnect from ProtonVPN."""
-        print("Disconnecting from ProtonVPN...")
-
-        exit_type = 1
-
-        try:
-            self.connection_manager.remove_connection(
-                self.user_conf_manager,
-                self.ks_manager,
-                self.ipv6_lp_manager,
-                self.reconector_manager
-            )
-        except exceptions.ConnectionNotFound as e:
-            print("Unable to disconnect: {}".format(e))
-        except (
-            exceptions.RemoveConnectionFinishError,
-            exceptions.StopConnectionFinishError
-        ) as e:
-            print("Unable to disconnect: {}".format(e))
-        except Exception as e:
-            capture_exception(e)
-            logger.exception(
-                "[!] Unknown error: {}".format(e)
-            )
-            print("Unknown error occured: {}".format(e))
-        else:
-            exit_type = 1
-            print("\nSuccessfully disconnected from ProtonVPN!")
-        finally:
-            sys.exit(exit_type)
-
-    def login(self, username=None, force=False, check_session=False):
+    def login(self, username=None):
         """Proxymethod to login user with ProtonVPN credentials."""
-        exit_type = 1
-        logger.info("Checking for existing session")
-        if (
-            not force
-            and self.get_existing_session(exit_type, is_connecting=False)
-        ):
+        if self.protonvpn.check_session_exists():
             print("\nYou are already logged in.")
-            sys.exit()
-
-        if check_session:
             return
 
-        self.check_internet_conn()
-
-        logger.info("Asking for ProtonVPN credentials")
-        if isinstance(username, list):
-            username = username.pop()
-        protonvpn_password = getpass.getpass("Enter your ProtonVPN password: ")
-
+        password = getpass.getpass("Enter your ProtonVPN password: ")
         logger.info("Credentials provided, attempting to login")
-        self.login_user(exit_type, username, protonvpn_password)
+
+        try:
+            self.protonvpn.login(username, password)
+        except (exceptions.ProtonVPNException, Exception) as e:
+            print("\n{}".format(e))
+            return
+
+        print("\nSuccessful login.")
 
     def logout(self, session=None, _pass_check=None, _removed=None):
         """Proxymethod to logout user."""
-        exit_type = 1
+        print("Attempting to logout.")
+        try:
+            self.protonvpn.logout()
+        except exceptions.KeyringDataNotFound as e:
+            print("\n{}".format(e))
+            return
+        except (exceptions.ProtonVPNException, Exception) as e:
+            logger.exception(e)
+            print("\n{}".format(e))
+            return
 
-        if _pass_check is None and _removed is None:
-            print("Logging out...")
-            session = self.get_existing_session(exit_type)
-            self.server_manager.validate_session(session)
-            try:
-                session.logout()
-            except exceptions.ProtonSessionWrapperError:
-                pass
-            self.remove_existing_connection()
-            _pass_check = []
-            _removed = []
-            print()
+        print(
+            "\nSession was ended and "
+            "you were successfully logged out."
+        )
+
+    def connect(self, args):
+        """Proxymethod to connect to ProtonVPN."""
+        if not self.protonvpn.check_session_exists():
+            print("\nNo session was found. Please login first.")
+            return
+
+        connect_type = False
+        connect_type_extra_arg = False
+        for cls_attr in inspect.getmembers(args):
+            if cls_attr[0] in self.CLI_CONNECT_DICT and cls_attr[1]:
+                connect_type = self.CLI_CONNECT_DICT[cls_attr[0]]
+                if isinstance(cls_attr[1], bool):
+                    connect_type_extra_arg = cls_attr[0]
+                    break
+
+                connect_type_extra_arg = cls_attr[1]
+
+        protocol = args.protocol
+
+        if not connect_type and not connect_type_extra_arg:
+            servername, protocol = self.dialog.start()
+            connect_type = ConnectionTypeEnum.SERVERNAME
+            connect_type_extra_arg = servername
+            protocol = protocol
+
+        print("Setting up ProtonVPN.")
 
         try:
-            self.user_manager.logout(_pass_check, _removed)
-        except exceptions.StoredProtonUsernameNotFound:
-            _pass_check.append(exceptions.StoredProtonUsernameNotFound)
-            self.logout(session, _pass_check, _removed)
-        except exceptions.StoredUserDataNotFound:
-            _pass_check.append(exceptions.StoredUserDataNotFound)
-            self.logout(session, _pass_check, _removed)
-        except exceptions.StoredSessionNotFound:
-            _pass_check.append(exceptions.StoredSessionNotFound)
-            self.logout(session, _pass_check, _removed)
-        except exceptions.KeyringDataNotFound:
-            print("\nUnable to logout. No session was found.")
-            sys.exit(exit_type)
-        except exceptions.AccessKeyringError:
-            print("\nUnable to logout. Could not access keyring.")
-            sys.exit(exit_type)
-        except exceptions.KeyringError as e:
-            print("\nUnknown keyring error occured: {}".format(e))
-            sys.exit(exit_type)
-        except Exception as e:
-            capture_exception(e)
-            logger.exception(
-                "[!] Unknown error: {}".format(e)
+            self.protonvpn.setup_connection(
+                connection_type=connect_type,
+                connection_type_extra_arg=connect_type_extra_arg,
+                protocol=protocol
             )
-            print("Unknown error occured: {}.".format(e))
-            sys.exit(exit_type)
+        except (exceptions.ProtonVPNException, Exception) as e:
+            logger.exception(e)
+            print("\n{}".format(e))
+            return
 
-        logger.info("Successful logout.")
-        print("Logout successful!")
-        sys.exit()
+        self._connect()
 
-    def status(self):
-        """Proxymethod to diplay connection status."""
-        conn_status = self.connection_manager.display_connection_status()
+    def disconnect(self):
+        """Proxymethod to disconnect from ProtonVPN."""
+        print("Disconnecting from ProtonVPN.")
 
-        if not conn_status:
-            print("\nNo active ProtonVPN connection.")
-            sys.exit()
+        try:
+            self.protonvpn.disconnect()
+        except exceptions.ConnectionNotFound:
+            print(
+                "\nNo ProtonVPN connection was found. "
+                "Please connect first to ProtonVPN."
+            )
+            return
+        except (exceptions.ProtonVPNException, Exception) as e:
+            logger.exception(e)
+            print("\n{}".format(e))
+            return
 
-        logger.info("Displaying connection status")
+        print("\nSuccessfully disconnected from ProtonVPN.")
 
-        country, load, features, tier = self.extract_server_info(
-            conn_status[ConnectionMetadataEnum.SERVER]
+    def reconnect(self):
+        """Reconnect to previously connected server."""
+        print("Gathering previous ProtonVPN connection data.")
+        try:
+            self.protonvpn.setup_reconnect()
+        except (exceptions.ProtonVPNException, Exception) as e:
+            logger.exception(e)
+            print("\n{}".format(e))
+            return
+
+        self._connect(True)
+
+    def _connect(self, is_reconnecting=False):
+        connection_metadata = self.protonvpn.get_connection_metadata()
+        print(
+            "{} to ProtonVPN on {} with {}.".format(
+                "Reconnecting" if is_reconnecting else "Connecting",
+                connection_metadata[
+                    ConnectionMetadataEnum.SERVER.value
+                ],
+                connection_metadata[
+                    ConnectionMetadataEnum.PROTOCOL.value
+                ].upper(),
+            )
         )
+        connect_response = self.protonvpn.connect()
 
-        self.ks_manager.update_connection_status()
+        logger.info("Dbus response: {}".format(connect_response))
 
-        ks_status = ""
-        if (
-            not self.ks_manager.interface_state_tracker[self.ks_manager.ks_conn_name]["is_running"] # noqa
-            and self.user_conf_manager.killswitch != KillswitchStatusEnum.DISABLED # noqa
-        ):
-            ks_status = "(Inactive, restart connection to activate KS)"
+        state = connect_response[ConnectionStartStatusEnum.STATE]
 
-        if len(features) == 1 and not len(features[0]):
-            features = ""
+        if state == VPNConnectionStateEnum.IS_ACTIVE:
+            print("\nSuccessfully connected to ProtonVPN.")
         else:
-            features = "Server Features: " + ", ".join(features) + "\n"
+            print("\nUnable to connect to ProtonVPN: {}".format(
+                connect_response[ConnectionStartStatusEnum.MESSAGE]
+            ))
 
-        protocol = conn_status[ConnectionMetadataEnum.PROTOCOL]
-        if protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]:
-            protocol = "OpenVPN (" + protocol.upper() + ")\n"
+    def set_killswitch(self, args):
+        """Set kill switch setting.
 
-        status_to_print = dedent("""
-            ProtonVPN Connection Status
-            ---------------------------
-            Country: \t {country}
-            Server: \t {server}
-            Server Load: \t {load}%
-            Server Plan: \t {server_tier}
-            {features}Protocol: \t {proto}
-            Kill switch: \t {killswitch_config} {killswitch_status}
-            Connection time: {time}
-        """).format(
-            country=country,
-            server=conn_status[ConnectionMetadataEnum.SERVER],
-            proto=protocol,
-            time=self.convert_time(
-                conn_status[ConnectionMetadataEnum.CONNECTED_TIME]
-            ),
-            load=load,
-            server_tier=SERVER_TIERS[int(tier)],
-            killswitch_config=KILLSWITCH_STATUS_TEXT[self.user_conf_manager.killswitch], # noqa
-            killswitch_status=ks_status,
-            features=features
+        Args:
+            Namespace (object): list objects with cli args
+        """
+        logger.info("Setting kill switch to: {}".format(args))
+        options_dict = dict(
+            always_on=KillswitchStatusEnum.HARD,
+            on=KillswitchStatusEnum.SOFT,
+            off=KillswitchStatusEnum.DISABLED
         )
-        print(status_to_print)
-        sys.exit()
+        contextual_conf_msg = {
+            KillswitchStatusEnum.HARD: "Always-on kill switch has been enabled.", # noqa
+            KillswitchStatusEnum.SOFT:"Kill switch has been enabled. Please reconnect to VPN to activate it.", # noqa
+            KillswitchStatusEnum.DISABLED: "Kill switch has been disabled."
+        }
+        for cls_attr in inspect.getmembers(args):
+            if cls_attr[0] in options_dict and cls_attr[1]:
+                kill_switch_option = options_dict[cls_attr[0]]
+
+        try:
+            self.user_settings.killswitch = kill_switch_option
+        except (exceptions.ProtonVPNException, Exception) as e:
+            logger.exception(e)
+            print(e)
+            return
+
+        print("\n{}".format(contextual_conf_msg[kill_switch_option]))
 
     def set_netshield(self, args):
         """Set netshield setting.
@@ -311,20 +239,11 @@ class CLIWrapper():
             Namespace (object): list objects with cli args
         """
         logger.info("Setting netshield to: {}".format(args))
-        self.get_existing_session(1)
-
-        if not args.off and self.user_manager.tier == ServerTierEnum.FREE:
-            print(
-                "\nBrowse the Internet free of malware, ads, "
-                "and trackers with NetShield.\n"
-                "To use NetShield, upgrade your subscription at: "
-                "https://account.protonvpn.com/dashboard"
-            )
-            sys.exit()
 
         restart_vpn_message = ""
-        if self.connection_manager.display_connection_status():
-            restart_vpn_message = " Please restart your VPN connection."
+        if self.protonvpn.get_active_protonvpn_connection():
+            restart_vpn_message = " Please restart your VPN connection "\
+                "to enable NetShield."
 
         contextual_confirmation_msg = {
             NetshieldTranslationEnum.MALWARE: "Netshield set to protect against malware.", # noqa
@@ -338,550 +257,212 @@ class CLIWrapper():
                     self.user_conf_manager.netshield
                 ]
             )
-            sys.exit()
+            return
 
-        user_choice_options_dict = dict(
+        options_dict = dict(
             malware=NetshieldTranslationEnum.MALWARE,
             ads_malware=NetshieldTranslationEnum.ADS_MALWARE,
             off=NetshieldTranslationEnum.DISABLED
         )
 
         for cls_attr in inspect.getmembers(args):
-            if cls_attr[0] in user_choice_options_dict and cls_attr[1]:
-                user_choice = user_choice_options_dict[cls_attr[0]]
-        self.user_conf_manager.update_netshield(user_choice)
+            if cls_attr[0] in options_dict and cls_attr[1]:
+                user_choice = options_dict[cls_attr[0]]
+
+        try:
+            self.user_settings.netshield = user_choice
+        except (exceptions.ProtonVPNException, Exception) as e:
+            logger.exception(e)
+            print("\n{}".format(e))
+            return
 
         print(
             "\n" + contextual_confirmation_msg[user_choice]
             + restart_vpn_message
         )
-        sys.exit()
 
-    def configure(self, args):
+    def configurations_menu(self, args):
         """Configure user settings."""
         logger.info("Starting to configure")
-        cli_configure = CLIConfigure(self.user_conf_manager, self.ks_manager)
         cli_config_commands = dict(
-            protocol=cli_configure.set_protocol,
-            dns=cli_configure.set_dns,
-            ip=cli_configure.set_dns,
-            list=cli_configure.set_dns,
-            default=cli_configure.restore_default_configurations,
+            protocol=self.set_protocol,
+            dns=self.set_automatic_dns,
+            ip=self.set_custom_dns,
+            list=self.list_configurations,
+            default=self.restore_default_configurations,
         )
 
         for cls_attr in inspect.getmembers(args):
             if cls_attr[0] in cli_config_commands and cls_attr[1]:
                 command = list(cls_attr)
 
-        cli_config_commands[command[0]](command)
+        if "ip" in command:
+            option_value = command[1]
+        else:
+            try:
+                option_value = command[1].pop()
+            except (KeyError, AttributeError):
+                option_value = None
 
-    def set_killswitch(self, args):
-        """Set kill switch setting.
+        cli_config_commands[command[0]](option_value)
 
-        Args:
-            Namespace (object): list objects with cli args
-        """
-        logger.info("Setting kill switch to: {}".format(args))
-        user_choice_options_dict = dict(
-            always_on=KillswitchStatusEnum.HARD,
-            on=KillswitchStatusEnum.SOFT,
-            off=KillswitchStatusEnum.DISABLED
-        )
-        contextual_conf_msg = {
-            KillswitchStatusEnum.HARD: "Always-on kill switch has been enabled.", # noqa
-            KillswitchStatusEnum.SOFT:"Kill switch has been enabled. Please reconnect to VPN to activate it.", # noqa
-            KillswitchStatusEnum.DISABLED: "Kill switch has been disabled."
-        }
-        for cls_attr in inspect.getmembers(args):
-            if cls_attr[0] in user_choice_options_dict and cls_attr[1]:
-                user_int_choice = user_choice_options_dict[cls_attr[0]]
-
+    def set_protocol(self, protocol):
         try:
-            self.ks_manager.manage(user_int_choice, True)
-        except exceptions.DisableConnectivityCheckError as e:
+            self.user_settings.protocol = ProtocolEnum(protocol)
+        except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
-            print(
-                "\nUnable to set kill switch setting: "
-                "Connectivity check could not be disabled.\n"
-                "Please disable connectivity check manually to be able to use "
-                "the killswitch feature."
-            )
-        else:
-            self.user_conf_manager.update_killswitch(user_int_choice)
-            print("\n" + contextual_conf_msg[user_int_choice])
-
-        sys.exit()
-
-    def reconnect(self):
-        """Reconnect to previously connected server."""
-        logger.info("Attemtping to recconnect to previous server")
-        self.session = self.get_existing_session(1)
-        self.server_manager.killswitch_status = self.user_conf_manager.killswitch # noqa
-        try:
-            last_conn = self.server_manager.get_connection_metadata(
-                MetadataEnum.LAST_CONNECTION
-            )
-        except FileNotFoundError:
-            logger.error("No previous connection data was found, exitting")
-            print(
-                "No previous connection data was found, "
-                "please first connect to a server."
-            )
-            sys.exit(1)
-
-        try:
-            previous_server = last_conn[ConnectionMetadataEnum.SERVER]
-        except KeyError:
-            logger.error(
-                "File exists but servername field is missing, exitting"
-            )
-            print(
-                "No previous connection data was found, "
-                "please first connect to a server."
-            )
-            sys.exit(1)
-
-        if not self.server_manager.is_servername_valid(previous_server):
-            logger.error(
-                "Invalid stored servername: {}".format(
-                    previous_server
-                )
-            )
-            print(
-                "\nInvalid servername {}".format(
-                    previous_server
-                )
-            )
-            sys.exit(1)
-
-        try:
-            protocol = last_conn[ConnectionMetadataEnum.PROTOCOL]
-        except KeyError:
-            protocol = self.user_conf_manager.default_protocol
-
-        if protocol not in FLAT_SUPPORTED_PROTOCOLS:
-            logger.error(
-                "Stored protocol {} is invalid servername".format(
-                    protocol
-                )
-            )
-            print(
-                "\nStored protocol {} is invalid".format(
-                    protocol
-                )
-            )
-            sys.exit(1)
-
-        self.protocol = protocol
-        self.check_internet_conn()
-
-        self.remove_existing_connection()
-        self.connect_option = "servername"
-        self.connect_option_value = previous_server
-        conn_status = self.setup_connection()
-
-        print("Connecting to ProtonVPN on {} with {}...".format(
-            conn_status[ConnectionMetadataEnum.SERVER],
-            conn_status[ConnectionMetadataEnum.PROTOCOL].upper(),
-        ))
-        self.connection_manager.start_connection()
-        DBusGMainLoop(set_as_default=True)
-        loop = GLib.MainLoop()
-        ProtonVPNStateMonitor(
-            VIRTUAL_DEVICE_NAME, loop, self.ks_manager,
-            self.user_conf_manager, self.connection_manager,
-            self.reconector_manager, self.session
-        )
-        loop.run()
-        sys.exit()
-
-    def setup_connection(self):
-        exit_type = 1
-        openvpn_username, openvpn_password = self.get_ovpn_credentials(
-            exit_type
-        )
-        logger.info("OpenVPN credentials fetched")
-
-        (
-            servername,
-            server_feature,
-            filtered_servers, servers
-        ) = self.get_connection_configurations()
-
-        (
-            certificate_fp,
-            matching_domain,
-            entry_ip,
-            server_label
-        ) = self.server_manager.generate_server_certificate(
-            servername, server_feature,
-            self.protocol, servers, filtered_servers
-        )
-        logger.info("Certificate, domain and entry ip were fetched.")
-
-        if server_label is not None:
-            openvpn_username = openvpn_username + "+b:" + server_label
-            logger.info("Appending server label")
-
-        self.add_vpn_connection(
-            certificate_fp, openvpn_username, openvpn_password,
-            matching_domain, exit_type, entry_ip
-        )
-
-        conn_status = self.connection_manager.display_connection_status(
-            "all_connections"
-        )
-
-        return conn_status
-
-    def check_internet_conn(self):
-        try:
-            self.connection_manager.check_internet_connectivity(
-                self.user_conf_manager.killswitch
-            )
-        except exceptions.InternetConnectionError:
-            print(
-                "\nNo Internet connection found. "
-                "Please make sure you are connected and retry."
-            )
-            sys.exit(1)
-        except exceptions.UnreacheableAPIError:
-            print(
-                "\nCouldn't reach Proton API."
-                "This might happen due to connection issues or network blocks."
-            )
-            sys.exit(1)
-
-    def extract_server_info(self, servername):
-        """Extract server information to be displayed.
-
-        Args:
-            servername (string): servername [PT#1]
-
-        Returns:
-            tuple: (country, load, features_list)
-        """
-        servers = self.server_manager.extract_server_list()
-        try:
-            country_code = self.server_manager.extract_server_value(
-                servername, "ExitCountry", servers
-            )
-            country = self.server_manager.extract_country_name(country_code)
-            load = self.server_manager.extract_server_value(
-                servername, "Load", servers
-            )
-            features = [
-                self.server_manager.extract_server_value(
-                    servername, "Features", servers
-                )
-            ]
-            tier = [
-                self.server_manager.extract_server_value(
-                    servername, "Tier", servers
-                )
-            ].pop()
-        except IndexError as e:
-            logger.exception("[!] IndexError: {}".format(e))
-            print(
-                "\nThe server you have connected to is not available. "
-                "If you are currently connected to the server, "
-                "you will be soon disconnected. "
-                "Please connect to another server."
-                )
-            sys.exit(1)
-        except Exception as e:
-            logger.exception("[!] Unknown error: {}".format(e))
-            print("\nUnknown error: {}".format(e))
-            sys.exit(1)
-
-        features_list = []
-        for feature in features:
-            if feature in SUPPORTED_FEATURES:
-                features_list.append(SUPPORTED_FEATURES[feature])
-
-        return country, load, features_list, tier
-
-    def convert_time(self, connected_time):
-        """Convert time from epoch to 24h.
-
-        Args:
-            connected time (string): time in seconds since epoch
-
-        Returns:
-            string: time in 24h format, since last connection was made
-        """
-        connection_time = (
-            time.time()
-            - int(connected_time)
-        )
-        return str(
-            datetime.timedelta(
-                seconds=connection_time
-            )
-        ).split(".")[0]
-
-    def add_vpn_connection(
-        self, certificate_filename, openvpn_username,
-        openvpn_password, domain, exit_type, entry_ip
-    ):
-        """Proxymethod to add ProtonVPN connection."""
-        print("Adding ProtonVPN connection...")
-
-        try:
-            self.connection_manager.add_connection(
-                certificate_filename, openvpn_username, openvpn_password,
-                CertificateManager.delete_cached_certificate, domain,
-                self.user_conf_manager, self.ks_manager, self.ipv6_lp_manager,
-                entry_ip
-            )
-        except exceptions.ImportConnectionError as e:
-            logger.exception("[!] ImportConnectionError: {}".format(e))
-            print("An error occured upon importing connection: ", e)
-        except Exception as e:
-            capture_exception(e)
-            logger.exception(
-                "[!] Unknown error: {}".format(e)
-            )
-            print("Unknown error: {}".format(e))
-            sys.exit(exit_type)
-        else:
-            exit_type = 0
-
-        print(
-            "ProtonVPN connection was successfully added to Network Manager."
-        )
-
-    def get_ovpn_credentials(self, exit_type, retry=False):
-        """Proxymethod to get user OVPN credentials."""
-        logger.info("Getting openvpn credentials")
-
-        openvpn_username, openvpn_password = None, None
-        error = False
-
-        try:
-            if retry:
-                self.user_manager.cache_user_data()
-            openvpn_username, openvpn_password = self.user_manager.get_stored_vpn_credentials( # noqa
-                self.session
-            )
-        except exceptions.JSONDataEmptyError:
-            print(
-                "\nThe stored session might be corrupted. "
-                + "Please, try to login again."
-            )
-            sys.exit(exit_type)
-        except (
-            exceptions.JSONDataError,
-            exceptions.JSONDataNoneError
-        ):
-            error = "cache_user_data"
-        except exceptions.APITimeoutError as e:
-            logger.exception(
-                "[!] APITimeoutError: {}".format(e)
-            )
-            print("\nConnection timeout, unable to reach API.")
-            sys.exit(1)
-        except exceptions.API10013Error:
-            print(
-                "\nCurrent session is invalid, "
-                "please logout and login again."
-            )
-            sys.exit(1)
-        except exceptions.ProtonSessionWrapperError as e:
-            logger.exception(
-                "[!] Unknown ProtonSessionWrapperError: {}".format(e)
-            )
-            print("\nUnknown API error occured: {}".format(e))
-            sys.exit(1)
-        except Exception as e:
-            capture_exception(e)
-            logger.exception(
-                "[!] Unknown error: {}".format(e)
-            )
-            print("\nUnknown error occured: {}.".format(e))
-            sys.exit(exit_type)
-
-        if error:
-            return self.get_ovpn_credentials(1, True)
-
-        return openvpn_username, openvpn_password
-
-    def get_connection_configurations(self):
-        """Proxymethod to get certficate filename and server domain."""
-        is_dialog = False
-        handle_error = False
-
-        if self.connect_option is None:
-            is_dialog = True
-
-        try:
-            if is_dialog:
-                servername, protocol = self.protonvpn_dialog.start(
-                    self.session
-                )
-                self.connect_option = "servername"
-                self.connect_option_value = servername
-                self.protocol = protocol
-
-            return self.CLI_CONNECT_DICT[self.connect_option](
-                self.session,
-                self.connect_option_value
-            )
-
-        except (KeyError, TypeError, ValueError) as e:
-            logger.exception("[!] Error: {}".format(e))
-            print("\nError: {}".format(e))
-            sys.exit(1)
-        except exceptions.EmptyServerListError as e:
-            print(
-                "\n{} This could mean that the ".format(e)
-                + "server(s) are under maintenance or "
-                + "inaccessible with your plan."
-            )
-            sys.exit(1)
-        except exceptions.IllegalServername as e:
-            print("\nIllegalServername: {}".format(e))
-            sys.exit(1)
-        except exceptions.CacheLogicalServersError as e:
-            print("\nCacheLogicalServersError: {}".format(e))
-            sys.exit(1)
-        except exceptions.MissingCacheError as e:
-            print("\nMissingCacheError: {}".format(e))
-            sys.exit(1)
-        except exceptions.API403Error as e:
-            print("\nAPI403Error: {}".format(e.error))
-            handle_error = 403
-        except exceptions.API10013Error:
-            print(
-                "\nCurrent session is invalid, "
-                "please logout and login again."
-            )
-            sys.exit(1)
-        except exceptions.APITimeoutError as e:
-            logger.exception(
-                "[!] APITimeoutError: {}".format(e)
-            )
-            print("\nConnection timeout, unable to reach API.")
-            sys.exit(1)
-        except exceptions.ProtonSessionWrapperError as e:
-            print("\nUnknown API error occured: {}".format(e.error))
-            sys.exit(1)
-        except Exception as e:
-            capture_exception(e)
-            logger.exception(
-                "[!] Unknown error: {}".format(e)
-            )
-            print("\nUnknown error occured: {}.".format(e))
-            sys.exit(1)
-
-        if not handle_error:
+            print(e)
             return
 
-        if handle_error == 403:
-            self.login(force=True)
-            self.session = self.get_existing_session(exit_type=1)
-            return self.get_connection_configurations()
+        if protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]:
+            protocol = "OpenVPN (" + protocol.value.upper() + ")"
 
-    def determine_protocol(self, args):
-        """Determine protocol based on CLI input arguments."""
-        logger.info("Determining protocol")
-        try:
-            protocol = args.protocol.lower().strip()
-        except AttributeError:
-            protocol = self.user_conf_manager.default_protocol
+        print(
+            "\nDefault connection protocol "
+            "has been updated to OpenVPN ({}).".format(
+                protocol.upper()
+            )
+        )
 
-        delattr(args, "protocol")
-
-        return protocol
-
-    def get_existing_session(self, exit_type=1, is_connecting=True):
-        """Proxymethod to get user session."""
-        logger.info("Attempt to get existing session")
-        session_exists = False
+    def set_automatic_dns(self, _):
+        """Set DNS setting."""
+        logger.info("Setting dns to automatic")
 
         try:
-            session = self.user_manager.load_session()
-        except exceptions.JSONDataEmptyError:
-            print(
-                "The stored session might be corrupted. "
-                + "Please, try to login again."
-            )
-            if is_connecting:
-                sys.exit(exit_type)
-        except (
-            exceptions.JSONDataError,
-            exceptions.JSONDataNoneError
-        ):
-            if is_connecting:
-                print("\nThere is no stored session. Please, login first.")
-                sys.exit(exit_type)
-        except exceptions.AccessKeyringError:
-            print(
-                "Unable to load session. Could not access keyring."
-            )
-            if is_connecting:
-                sys.exit(exit_type)
-        except exceptions.KeyringError as e:
-            print("\nUnknown keyring error occured: {}".format(e))
-            if is_connecting:
-                sys.exit(exit_type)
+            self.user_settings.dns = UserSettingStatusEnum.ENABLED
         except Exception as e:
-            capture_exception(e)
-            logger.exception(
-                "[!] Unknown error: {}".format(e)
+            logger.exception(e)
+            print(e)
+            return
+
+        confirmation_message = "\nDNS automatic configuration enabled.\n" \
+            + self.DNS_REMINDER_MESSAGE
+
+        print(confirmation_message)
+
+    def set_custom_dns(self, dns_ip_list):
+        if len(dns_ip_list) > 3:
+            logger.error("More then 3 custom DNS IPs were provided")
+            print(
+                "\nYou provided more then 3 DNS servers. "
+                "Please enter up to 3 DNS server IPs."
             )
-            print("Unknown error occured: {}.".format(e))
-            if is_connecting:
-                sys.exit(exit_type)
-        else:
-            session_exists = True
-            logger.info("Local session was found.")
+            return
 
-        if is_connecting:
-            return session
-
-        return session_exists
-
-    def login_user(self, exit_type, protonvpn_username, protonvpn_password):
-
-        print("Attempting to login...\n")
         try:
-            self.user_manager.login(protonvpn_username, protonvpn_password)
-        except (TypeError, ValueError) as e:
-            print("Unable to authenticate: {}".format(e))
-        except (exceptions.API8002Error, exceptions.API85032Error) as e:
-            print("{}".format(e))
-        except exceptions.APITimeoutError:
-            print("Connection timeout, unable to reach API.")
-        except (exceptions.UnhandledAPIError, exceptions.APIError) as e:
-            print("Unhandled API error occured: {}".format(e))
-        except exceptions.ProtonSessionWrapperError as e:
-            logger.exception(
-                "[!] ProtonSessionWrapperError: {}".format(e)
-            )
-            print("Unknown API error occured: {}".format(e))
+            self.user_settings.dns_custom_ips = dns_ip_list
         except Exception as e:
-            capture_exception(e)
-            logger.exception(
-                "[!] Unknown error: {}".format(e)
-            )
-            print("Unknown error occured: {}".format(e))
-        else:
-            exit_type = 0
-            logger.info("Successful login.")
-            print("Login successful!")
-        finally:
-            sys.exit(exit_type)
+            logger.exception(e)
+            print(e)
+            return
 
-    def remove_existing_connection(self):
-        try:
-            self.connection_manager.remove_connection(
-                self.user_conf_manager,
-                self.ks_manager,
-                self.ipv6_lp_manager,
-                self.reconector_manager
+        self.user_settings.dns = UserSettingStatusEnum.CUSTOM
+
+        print_custom_dns_list = ", ".join(dns for dns in dns_ip_list)
+        confirmation_message = "\nDNS will be managed by "\
+            "the provided custom IPs: \n-{}\n\n{}".format(
+                print_custom_dns_list,
+                self.DNS_REMINDER_MESSAGE
             )
-        except exceptions.ConnectionNotFound:
-            pass
-        else:
-            print("Disconnected from ProtonVPN connection.")
+        print(confirmation_message)
+
+    def list_configurations(self, _):
+        user_settings_dict = self.user_settings.get_user_settings(True)
+
+        status_to_print = dedent("""
+            ProtonVPN User Settings
+            ---------------------------
+            Default Protocol: {protocol}
+            Kill Switch: \t  {killswitch}
+            Netshield: \t  {netshield}
+            DNS: \t\t  {dns}
+        """).format(
+            protocol=user_settings_dict[DisplayUserSettingsEnum.PROTOCOL],
+            killswitch=user_settings_dict[DisplayUserSettingsEnum.KILLSWITCH],
+            dns=user_settings_dict[DisplayUserSettingsEnum.DNS],
+            netshield=user_settings_dict[DisplayUserSettingsEnum.NETSHIELD],
+        )
+        print(status_to_print)
+
+    def restore_default_configurations(self, _):
+        """Restore default configurations."""
+        user_choice = input(
+            "\nAre you sure you want to restore to "
+            "default configurations? [y/N]: "
+        ).lower().strip()
+
+        if not user_choice == "y":
+            return
+
+        logger.info("Restoring default configurations")
+
+        print("Restoring default ProtonVPN configurations...")
+        time.sleep(0.5)
+
+        try:
+            self.user_settings.reset_to_default_configs()
+        except Exception as e:
+            print("\n{}".format(e))
+            return
+
+        print("\nConfigurations were successfully reset to default values.")
+
+    def status(self):
+        """Proxymethod to diplay connection status."""
+        if not self.protonvpn.get_active_protonvpn_connection():
+            print("\nNo active ProtonVPN connection.")
+            return
+
+        logger.info("Gathering connection information")
+        conn_status_dict = self.protonvpn.get_connection_status()
+        server = conn_status_dict.pop(
+            ConnectionStatusEnum.SERVER_INFORMATION
+        )
+
+        server_feature_enum = FeatureEnum(server.features)
+        tier_enum = ServerTierEnum(server.tier)
+
+        feature = "Server Features: " + ", ".join(
+            [SUPPORTED_FEATURES[server_feature_enum]]
+        ) + "\n"
+
+        entry_country = self.protonvpn.country.get_country_name(
+            server.entry_country
+        )
+        exit_country = self.protonvpn.country.get_country_name(
+            server.exit_country
+        )
+
+        status_to_print = dedent("""
+            ProtonVPN Connection Status
+            ---------------------------
+            IP: \t\t {server_ip}
+            Server: \t {server}
+            Country: \t {secure_core}{country}
+            Protocol: \t {proto}
+            Server Load: \t {load}%
+            Server Plan: \t {server_tier}
+            {features}Kill switch: \t {killswitch_status}
+            Connection time: {time}
+        """).format(
+            server_ip=conn_status_dict[ConnectionStatusEnum.SERVER_IP],
+            country=exit_country,
+            city=server.city,
+            server=server.name,
+            load=int(server.load),
+            server_tier=SERVER_TIERS[tier_enum],
+            features=feature
+            if server_feature_enum != FeatureEnum.NORMAL
+            else "",
+            secure_core=(
+                "{} >> ".format(entry_country)
+                if server_feature_enum == FeatureEnum.SECURE_CORE
+                else ""
+            ),
+            killswitch_status=conn_status_dict[
+                ConnectionStatusEnum.KILLSWITCH
+            ],
+            proto=conn_status_dict[ConnectionStatusEnum.PROTOCOL],
+            time=conn_status_dict[ConnectionStatusEnum.TIME],
+        )
+        print(status_to_print)

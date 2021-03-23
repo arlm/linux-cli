@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
-%define version 3.3.1
-%define release 1
+%define version 3.4.0
+%define release 3
 
 Prefix: %{_prefix}
 
@@ -20,7 +20,7 @@ BuildRoot: %{_tmppath}/%{unmangled_name}-%{version}-%{release}-buildroot
 
 BuildRequires: python3-devel
 BuildRequires: python3-setuptools
-Requires: python3-protonvpn-nm-lib >= 0.4.0, python3-protonvpn-nm-lib < 0.5.0
+Requires: python3-protonvpn-nm-lib >= 0.5.0, python3-protonvpn-nm-lib < 0.6.0
 Requires: python3-dialog
 
 %{?python_disable_dependency_generator}
@@ -47,6 +47,10 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Mon Feb 22 2021 Proton Technologies AG <opensource@proton.me> 3.4.0-3
+- Add support for protonvpn-nm-lib 0.5.0
+- Replace os.system for custom subprocess wrapper
+
 * Thu Feb 25 2021 Proton Technologies AG <opensource@proton.me> 3.3.1-1
 - Update change for protonvpn-nm-lib 0.4.2
 

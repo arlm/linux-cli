@@ -1,4 +1,5 @@
-APP_VERSION = "3.3.1"
+APP_VERSION = "3.4.0"
+LOGGER_NAME = "protonvpn-cli"
 MAIN_CLI_HELP = """
 ProtonVPN CLI v{}
 
@@ -82,13 +83,13 @@ examples:
 
 CONFIG_HELP = """
 usage:  protonvpn-cli config [-h | --help]
-        [--dns <command> [--ip <IP> | --list] | [-p | --protocol] <protocol> | [-d | --default]]
+        [--dns <command> [--ip <IP>] | [-p | --protocol] <protocol> | [-d | --default]]
 
 optional arguments:
     --dns <command> Change DNS configurations
                     (custom | automatic).
     --ip            Custom DNS IP (max 3 IPs).
-    --list          List custom IPs.
+    -l,--list
     -p, --protocol  Change default protocol.
     -d, --default   Reset to default configurations.
     -h, --help      Display help message.
