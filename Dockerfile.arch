@@ -48,7 +48,7 @@ RUN pacman -Syu --noconfirm \
     && rm -rf .git \
     && cd .. \
     && git clone --single-branch --branch $git_branch $git_repo_lib \
-    && cd protonvpn-nm-core && pip3 install -e . \
+    && cd protonvpn-nm-lib && pip3 install -e . \
     && rm -rf .git && cd ..
 
 COPY docker_entry_arch.sh /usr/local/bin
