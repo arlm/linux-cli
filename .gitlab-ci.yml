@@ -114,19 +114,19 @@ test-arch:
  image: $CI_REGISTRY_IMAGE:branch-$CI_COMMIT_REF_SLUG-archlinux
 
 
-## Jobs to publish commits + tags from master to github
-# release-publish-github:
-#   stage: release
-#   variables:
-#     RELEASE_SYNC_PUBLIC_URL: git@github.com:repo-username/repo-name.git
-#     RELEASE_SYNC_TO_BRANCH: 'master'
-#     RELEASE_SYNC_FROM_BRANCH: 'master'
-#   extends: .release-sync-commit-shared
+# Jobs to publish commits + tags from master to github
+release-publish-github:
+  stage: release
+  variables:
+    RELEASE_SYNC_PUBLIC_URL: git@github.com:protonvpn/linux-cli.git
+    RELEASE_SYNC_TO_BRANCH: 'master'
+    RELEASE_SYNC_FROM_BRANCH: 'master'
+  extends: .release-sync-commit-shared
 
-# release-publish-github-tags:
-#   stage: release
-#   variables:
-#     RELEASE_SYNC_PUBLIC_URL: git@github.com:repo-username/repo-name.git
-#     RELEASE_SYNC_TO_BRANCH: 'master'
-#     RELEASE_SYNC_FROM_BRANCH: 'master'
-#   extends: .release-sync-tags-shared
+release-publish-github-tags:
+  stage: release
+  variables:
+    RELEASE_SYNC_PUBLIC_URL: git@github.com:protonvpn/linux-cli.git
+    RELEASE_SYNC_TO_BRANCH: 'master'
+    RELEASE_SYNC_FROM_BRANCH: 'master'
+  extends: .release-sync-tags-shared
