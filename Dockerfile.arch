@@ -7,7 +7,7 @@ ARG git_branch
 ENV git_branch=${git_branch:-GIT_BRANCH}
 
 ARG pkgname
-ENV pkgname=${pkgname:-protonvpn-cli}
+ENV pkgname=${pkgname:-linux-cli}
 RUN pacman -Syu --noconfirm \
     sudo \
     git \

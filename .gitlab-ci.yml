@@ -29,7 +29,7 @@ variables:
  CI_REGISTRY_IMAGE_PROTON: "$CI_REGISTRY/infra/kubernetes/images"
  PKGNAME_ARCH: "protonvpn-cli"
  PKGNAME_RPM: "protonvpn-cli"
- ORIGINAL_PKGNAME: "protonvpn-cli"
+ ORIGINAL_PKGNAME: "linux-cli"
 
 
 ######## Manage the Image ##########
