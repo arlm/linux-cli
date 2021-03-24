@@ -1,6 +1,4 @@
 FROM IMAGE_URL_RPM
-ARG pkgname
-ENV pkgname=${pkgname:-protonvpn-cli}
 ARG git_repo_lib
 ENV git_repo_lib=${git_repo_lib:-GIT_REPO_LIB}
 ARG git_repo_client
@@ -8,7 +6,8 @@ ENV git_repo_client=${git_repo_client:-GIT_REPO_CLIENT}
 ARG git_branch
 ENV git_branch=${git_branch:-GIT_BRANCH}
 
-RUN dnf update -y
+ARG pkgname
+ENV pkgname=${pkgname:-linux-cli}
 
 RUN dnf install -y \
     net-tools \

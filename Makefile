@@ -67,7 +67,7 @@ local: docker-source
 	--build-arg git_branch=$(GIT_BRANCH) \
 	.
 	@ rm -rf __SOURCE_APP || true
-local: NAME_IMAGE = protonvpn-cli:latest
+local: NAME_IMAGE = linux-cli:latest
 
 local-base: local-deb local-rpm local-arch
 
@@ -96,8 +96,8 @@ test-deb: local-deb
 			--rm \
 			-it \
 			--privileged \
-			--volume $(PWD)/home/user/protonvpn-cli/ \
-			protonvpn-cli:latest \
+			--volume $(PWD)/home/user/linux-cli/ \
+			linux-cli:latest \
 			python3 -m pytest
 
 ## Run tests against the latest version of the rpm from your code
@@ -107,8 +107,8 @@ test-rpm: local-rpm
 			--rm \
 			-it \
 			--privileged \
-			--volume $(PWD)/home/user/protonvpn-cli/ \
-			protonvpn-cli:latest \
+			--volume $(PWD)/home/user/linux-cli/ \
+			linux-cli:latest \
 			python3 -m pytest
 
 ## Run tests against the latest version of the arch from your code
@@ -118,6 +118,6 @@ test-arch: local-arch
 			--rm \
 			-it \
 			--privileged \
-			--volume $(PWD)/home/user/protonvpn-cli/ \
-			protonvpn-cli:latest \
+			--volume $(PWD)/home/user/linux-cli/ \
+			linux-cli:latest \
 			python3 -m pytest
