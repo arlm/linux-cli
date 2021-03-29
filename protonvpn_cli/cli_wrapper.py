@@ -365,7 +365,7 @@ class CLIWrapper:
 
         print_custom_dns_list = ", ".join(dns for dns in dns_ip_list)
         confirmation_message = "\nDNS will be managed by "\
-            "the provided custom IPs: \n-{}\n\n{}".format(
+            "the provided custom IPs: \n{}\n\n{}".format(
                 print_custom_dns_list,
                 self.DNS_REMINDER_MESSAGE
             )
