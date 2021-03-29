@@ -4,7 +4,7 @@ import sys
 from proton.constants import VERSION as proton_version
 from protonvpn_nm_lib.constants import APP_VERSION as lib_version
 from protonvpn_nm_lib.enums import ProtocolEnum
-from protonvpn_nm_lib.logger import logger
+from .logger import logger
 
 from .cli_wrapper import CLIWrapper
 from .constants import (APP_VERSION, CONFIG_HELP, CONNECT_HELP, KS_HELP,
