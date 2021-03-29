@@ -83,13 +83,13 @@ examples:
 
 CONFIG_HELP = """
 usage:  protonvpn-cli config [-h | --help]
-        [--dns <command> [--ip <IP>] | [-p | --protocol] <protocol> | [-d | --default]]
+        [[--list | -l] | --dns <command> [--ip <IP>] | [-p | --protocol] <protocol> | [-d | --default]]
 
 optional arguments:
     --dns <command> Change DNS configurations
                     (custom | automatic).
     --ip            Custom DNS IP (max 3 IPs).
-    -l,--list
+    -l, --list      List all configurations.
     -p, --protocol  Change default protocol.
     -d, --default   Reset to default configurations.
     -h, --help      Display help message.
@@ -97,7 +97,7 @@ optional arguments:
 examples:
     protonvpn-cli config --dns automatic
     protonvpn-cli config --dns custom --ip 192.168.0.1
-    protonvpn-cli config --dns custom --list
+    protonvpn-cli config (-l | --list)
     protonvpn-cli config -p tcp
     protonvpn-cli config --protocol udp
     protonvpn-cli config (-d | --default)
