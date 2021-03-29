@@ -125,7 +125,12 @@ class CLIWrapper:
         protocol = args.protocol
 
         if not connect_type and not connect_type_extra_arg:
-            servername, protocol = self.dialog.start()
+            try:
+                servername, protocol = self.dialog.start()
+            except Exception as e:
+                logger.exception(e)
+                print("\n{}".format(e))
+                return
             connect_type = ConnectionTypeEnum.SERVERNAME
             connect_type_extra_arg = servername
             protocol = protocol
