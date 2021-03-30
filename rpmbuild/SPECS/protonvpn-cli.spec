@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
-%define version 3.4.0
-%define release 3
+%define version 3.4.1
+%define release 1
 
 Prefix: %{_prefix}
 
@@ -45,6 +45,14 @@ rm -rf $RPM_BUILD_ROOT
 %{python3_sitelib}/protonvpn_cli/
 %{python3_sitelib}/protonvpn_cli-%{version}*.egg-info/
 %defattr(-,root,root)
+
+%changelog
+* Tue Mar 30 2021 Proton Technologies AG <opensource@proton.me> 3.4.1-1
+- Fix dialog crash
+- Remove "-" when displaying DNS servers after being added
+- Add "config --list" to help message
+- User CLI logger instead of lib logger
+- Catch unexpected exceptions upon setting up reconnect and upon connect()
 
 %changelog
 * Mon Feb 22 2021 Proton Technologies AG <opensource@proton.me> 3.4.0-3
