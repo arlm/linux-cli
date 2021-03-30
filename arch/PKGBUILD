@@ -7,7 +7,7 @@ arch=("any")
 url="https://github.com/ProtonVPN/"
 license=("GPL3")
 groups=("ProtonVPN")
-depends=("python-protonvpn-nm-lib<0.5.0" "python-protonvpn-nm-lib>=0.4.0" "python-protonvpn-nm-lib<0.5.0" "python-pythondialog")
+depends=("python-protonvpn-nm-lib>=0.5.0" "python-protonvpn-nm-lib<0.6.0" "python-pythondialog")
 makedepends=("python-setuptools")
 source=("$pkgname.tar.gz")
 sha256sums=(.)
