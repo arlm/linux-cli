@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
-%define version 3.4.0
-%define release 3
+%define version 3.4.1
+%define release 1
 
 Prefix: %{_prefix}
 
@@ -14,7 +14,6 @@ License: GPLv3
 Url: https://github.com/ProtonVPN
 Vendor: Proton Technologies AG <opensource@proton.me>
 Source0: %{unmangled_name}-%{version}.tar.gz
-Group: Development/Libraries
 BuildArch: noarch
 BuildRoot: %{_tmppath}/%{unmangled_name}-%{version}-%{release}-buildroot
 
@@ -47,6 +46,13 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Tue Mar 30 2021 Proton Technologies AG <opensource@proton.me> 3.4.1-1
+- Fix dialog crash
+- Remove "-" when displaying DNS servers after being added
+- Add "config --list" to help message
+- User CLI logger instead of lib logger
+- Catch unexpected exceptions upon setting up reconnect and upon connect()
+
 * Mon Feb 22 2021 Proton Technologies AG <opensource@proton.me> 3.4.0-3
 - Add support for protonvpn-nm-lib 0.5.0
 - Replace os.system for custom subprocess wrapper

@@ -125,7 +125,12 @@ class CLIWrapper:
         protocol = args.protocol
 
         if not connect_type and not connect_type_extra_arg:
-            servername, protocol = self.dialog.start()
+            try:
+                servername, protocol = self.dialog.start()
+            except Exception as e:
+                logger.exception(e)
+                print("\n{}".format(e))
+                return
             connect_type = ConnectionTypeEnum.SERVERNAME
             connect_type_extra_arg = servername
             protocol = protocol
@@ -171,7 +176,11 @@ class CLIWrapper:
             self.protonvpn.setup_reconnect()
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
-            print("\n{}".format(e))
+            print(
+                "\nUnable to setup reconnect. "
+                "Please make sure that you have access to internet or "
+                "that you've previously connected to another server."
+            )
             return
 
         self._connect(True)
@@ -189,7 +198,11 @@ class CLIWrapper:
                 ].upper(),
             )
         )
-        connect_response = self.protonvpn.connect()
+        try:
+            connect_response = self.protonvpn.connect()
+        except Exception as e:
+            print("\n{}".format(e))
+            return
 
         logger.info("Dbus response: {}".format(connect_response))
 
@@ -360,7 +373,7 @@ class CLIWrapper:
 
         print_custom_dns_list = ", ".join(dns for dns in dns_ip_list)
         confirmation_message = "\nDNS will be managed by "\
-            "the provided custom IPs: \n-{}\n\n{}".format(
+            "the provided custom IPs: \n{}\n\n{}".format(
                 print_custom_dns_list,
                 self.DNS_REMINDER_MESSAGE
             )

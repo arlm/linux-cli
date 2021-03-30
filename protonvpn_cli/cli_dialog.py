@@ -30,9 +30,9 @@ class ProtonVPNDialog:
 
         self.protonvpn.ensure_connectivity()
         countries = self.country.get_dict_with_country_servername(
-            self.servers
+            self.servers, self.session.vpn_tier
         )
-
+        logger.debug(countries)
         # Fist dialog
         country = self.display_country(countries)
         logger.info("Selected country: \"{}\"".format(country))
@@ -83,10 +83,7 @@ class ProtonVPNDialog:
         """
         choices = []
 
-        # try:
         country_servers = self.sort_servers(country, countries)
-        # except Exception as e:
-        #     raise Exception(e)
 
         for servername in country_servers:
             server = self.protonvpn.config_for_server_with_servername(
