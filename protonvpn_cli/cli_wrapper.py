@@ -176,7 +176,11 @@ class CLIWrapper:
             self.protonvpn.setup_reconnect()
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
-            print("\n{}".format(e))
+            print(
+                "\nUnable to setup reconnect. "
+                "Please make sure that you have access to internet or "
+                "that you've previously connected to another server."
+            )
             return
 
         self._connect(True)
@@ -194,7 +198,11 @@ class CLIWrapper:
                 ].upper(),
             )
         )
-        connect_response = self.protonvpn.connect()
+        try:
+            connect_response = self.protonvpn.connect()
+        except Exception as e:
+            print("\n{}".format(e))
+            return
 
         logger.info("Dbus response: {}".format(connect_response))
 
