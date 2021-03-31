@@ -1,10 +1,11 @@
-protonvpn-cli (3.4.1-1) unstable; urgency=low
+protonvpn-cli (3.4.1-2) unstable; urgency=low
 
   * Fix dialog crash
   * Remove "-" when displaying DNS servers after being added
   * Add "config --list" to help message
   * User CLI logger instead of lib logger
   * Catch unexpected exceptions upon setting up reconnect and upon connect()
+  * Adopt new library exceptions for improved error handling
 
  -- Proton Technologies AG <opensource@proton.me>  Tue, 30 Mar 2021 12:20:00 +0100
  
