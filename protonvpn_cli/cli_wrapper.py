@@ -310,6 +310,15 @@ class CLIWrapper:
             Namespace (object): list objects with cli args
         """
         logger.info("Setting netshield to: {}".format(args))
+        session = self.protonvpn.get_session()
+        if not args.off and session.vpn_tier == ServerTierEnum.FREE.value:
+            print(
+                "\nBrowse the Internet free of malware, ads, "
+                "and trackers with NetShield.\n"
+                "To use NetShield, upgrade your subscription at: "
+                "https://account.protonvpn.com/dashboard"
+            )
+            return
 
         restart_vpn_message = ""
         if self.protonvpn.get_active_protonvpn_connection():
