@@ -133,13 +133,11 @@ optional arguments:
     --off           Disable NetShield.
     --malware       Block malware.
     --ads-malware   Block malware, ads, & trackers
-    -s, --status    Display NetShield status.
     -h, --help      Display help message.
 
 examples:
     protonvpn-cli (ns | netshield) --malware
     protonvpn-cli (ns | netshield) --ads-malware
-    protonvpn-cli (ns | netshield) [-s | --status]
     protonvpn-cli (ns | netshield) --off
     protonvpn-cli (ns | netshield) --help
 """ # noqa
