@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.4.1
-%define release 2
+%define release 3
 
 Prefix: %{_prefix}
 
@@ -46,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Tue Mar 30 2021 Proton Technologies AG <opensource@proton.me> 3.4.1-2
+* Tue Mar 30 2021 Proton Technologies AG <opensource@proton.me> 3.4.1-3
 - Fix dialog crash
 - Remove "-" when displaying DNS servers after being added
 - Add "config --list" to help message
