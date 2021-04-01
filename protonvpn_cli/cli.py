@@ -168,8 +168,8 @@ class ProtonVPNCLI:
             action="store_true"
         )
         group.add_argument(
-            "--always-on",
-            help="Always on killswitch.",
+            "--permanent",
+            help="Permanent killswitch.",
             action="store_true"
         )
         parser.add_argument(
@@ -180,7 +180,7 @@ class ProtonVPNCLI:
             not args.help
             and not args.on
             and not args.off
-            and not args.always_on
+            and not args.permanent
         ):
             print(KS_HELP)
             parser.exit()

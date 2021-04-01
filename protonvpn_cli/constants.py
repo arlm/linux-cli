@@ -106,13 +106,13 @@ examples:
 
 KS_HELP = """
 usage:  protonvpn-cli (ks | killswitch) [-h | --help]
-        [--on | --off | --always-on]
+        [--on | --off | --permanent]
 
 optional arguments:
     --on            Start Kill Switch upon connecting to VPN
                     and stop it when disconnecting from VPN.
     --off           Stop and remove Kill Switch.
-    --always-on     Start Kill Switch regardless of VPN connection.
+    --permanent     Start Kill Switch regardless of VPN connection.
                     Warning: This takes effect immediatly and you
                     might end up without internet connection.
                     Either connect to VPN or turn the ks off.
@@ -121,7 +121,7 @@ optional arguments:
 examples:
     protonvpn-cli (ks | killswitch) --on
     protonvpn-cli (ks | killswitch) --off
-    protonvpn-cli (ks | killswitch) --always-on
+    protonvpn-cli (ks | killswitch) --permanent
     protonvpn-cli (ks | killswitch) --help
 """
 

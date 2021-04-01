@@ -87,8 +87,17 @@ class CLIWrapper:
 
         print("\nSuccessful login.")
 
-    def logout(self, session=None, _pass_check=None, _removed=None):
+    def logout(self):
         """Proxymethod to logout user."""
+        if self.protonvpn.get_active_protonvpn_connection():
+            user_choice = input(
+                "\nLogging out will disconnect the active VPN connection.\n"
+                "Do you want to continue ? [y/N]: "
+            ).lower().strip()
+
+            if not user_choice == "y":
+                return
+
         print("Attempting to logout.")
         try:
             self.protonvpn.logout()
@@ -281,12 +290,12 @@ class CLIWrapper:
         """
         logger.info("Setting kill switch to: {}".format(args))
         options_dict = dict(
-            always_on=KillswitchStatusEnum.HARD,
+            permanent=KillswitchStatusEnum.HARD,
             on=KillswitchStatusEnum.SOFT,
             off=KillswitchStatusEnum.DISABLED
         )
         contextual_conf_msg = {
-            KillswitchStatusEnum.HARD: "Always-on kill switch has been enabled.", # noqa
+            KillswitchStatusEnum.HARD: "Permanent kill switch has been enabled.", # noqa
             KillswitchStatusEnum.SOFT:"Kill switch has been enabled. Please reconnect to VPN to activate it.", # noqa
             KillswitchStatusEnum.DISABLED: "Kill switch has been disabled."
         }
