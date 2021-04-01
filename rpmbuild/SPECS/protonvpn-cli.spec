@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.4.1
-%define release 3
+%define release 4
 
 Prefix: %{_prefix}
 
@@ -46,13 +46,15 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Tue Mar 30 2021 Proton Technologies AG <opensource@proton.me> 3.4.1-3
+* Tue Mar 30 2021 Proton Technologies AG <opensource@proton.me> 3.4.1-4
 - Fix dialog crash
 - Remove "-" when displaying DNS servers after being added
 - Add "config --list" to help message
 - User CLI logger instead of lib logger
 - Catch unexpected exceptions upon setting up reconnect and upon connect()
 - Adopt new library exceptions for improved error handling
+- Add confirmation upon logout if VPN is active
+- Replace always-on for permanent
 
 * Mon Feb 22 2021 Proton Technologies AG <opensource@proton.me> 3.4.0-3
 - Add support for protonvpn-nm-lib 0.5.0
