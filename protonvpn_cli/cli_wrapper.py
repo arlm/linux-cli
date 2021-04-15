@@ -87,8 +87,17 @@ class CLIWrapper:
 
         print("\nSuccessful login.")
 
-    def logout(self, session=None, _pass_check=None, _removed=None):
+    def logout(self):
         """Proxymethod to logout user."""
+        if self.protonvpn.get_active_protonvpn_connection():
+            user_choice = input(
+                "\nLogging out will disconnect the active VPN connection.\n"
+                "Do you want to continue ? [y/N]: "
+            ).lower().strip()
+
+            if not user_choice == "y":
+                return
+
         print("Attempting to logout.")
         try:
             self.protonvpn.logout()
@@ -136,6 +145,9 @@ class CLIWrapper:
             protocol = protocol
 
         print("Setting up ProtonVPN.")
+        killswitch_msg = "If Kill Switch is enabled, please disabled " \
+            "it temporarily to store necessary configurations."
+        relogin_msg = "If you've recently upgraded your plan, please re-login."
 
         try:
             self.protonvpn.setup_connection(
@@ -143,6 +155,61 @@ class CLIWrapper:
                 connection_type_extra_arg=connect_type_extra_arg,
                 protocol=protocol
             )
+        except exceptions.ServerCacheNotFound as e:
+            logger.exception(e)
+            print(
+                "\nServer cache is missing. "
+                "Please ensure that you have internet connection to "
+                "cache servers."
+            )
+            print(killswitch_msg)
+            return
+        except exceptions.ServernameServerNotFound as e:
+            logger.exception(e)
+            print(
+                "\nNo server could be found with the provided servername.\n"
+                "Either the server is under maintenance or\nyou "
+                "don't have access to it with your plan."
+            )
+            print(relogin_msg)
+            return
+        except exceptions.FeatureServerNotFound as e:
+            logger.exception(e)
+            print(
+                "\nNo servers were found with the provided feature.\n"
+                "Either the servers with the provided feature are "
+                "under maintenance or\nyou don't have access to the "
+                "specified feature with your plan."
+            )
+            print(relogin_msg)
+            return
+        except exceptions.FastestServerInCountryNotFound as e:
+            logger.exception(e)
+            print(
+                "\nNo server could be found with the provided country.\n"
+                "Either the provided country is not available or\n"
+                "you don't have access to the specified country "
+                "with your plan."
+            )
+            print(relogin_msg)
+            return
+        except (
+            exceptions.RandomServerNotFound, exceptions.FastestServerNotFound
+        ) as e:
+            logger.exception(e)
+            print(
+                "\nNo server could be found.\n"
+                "Please ensure that you have an active internet connection.\n"
+                "If the issue persists, please contact support."
+            )
+        except exceptions.DefaultOVPNPortsNotFoundError as e:
+            logger.exception(e)
+            print(
+                "\nThere are missing configurations. "
+                "Please ensure that you have internet connection."
+            )
+            print(killswitch_msg)
+            return
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print("\n{}".format(e))
@@ -223,12 +290,12 @@ class CLIWrapper:
         """
         logger.info("Setting kill switch to: {}".format(args))
         options_dict = dict(
-            always_on=KillswitchStatusEnum.HARD,
+            permanent=KillswitchStatusEnum.HARD,
             on=KillswitchStatusEnum.SOFT,
             off=KillswitchStatusEnum.DISABLED
         )
         contextual_conf_msg = {
-            KillswitchStatusEnum.HARD: "Always-on kill switch has been enabled.", # noqa
+            KillswitchStatusEnum.HARD: "Permanent kill switch has been enabled.", # noqa
             KillswitchStatusEnum.SOFT:"Kill switch has been enabled. Please reconnect to VPN to activate it.", # noqa
             KillswitchStatusEnum.DISABLED: "Kill switch has been disabled."
         }
@@ -252,6 +319,15 @@ class CLIWrapper:
             Namespace (object): list objects with cli args
         """
         logger.info("Setting netshield to: {}".format(args))
+        session = self.protonvpn.get_session()
+        if not args.off and session.vpn_tier == ServerTierEnum.FREE.value:
+            print(
+                "\nBrowse the Internet free of malware, ads, "
+                "and trackers with NetShield.\n"
+                "To use NetShield, upgrade your subscription at: "
+                "https://account.protonvpn.com/dashboard"
+            )
+            return
 
         restart_vpn_message = ""
         if self.protonvpn.get_active_protonvpn_connection():
