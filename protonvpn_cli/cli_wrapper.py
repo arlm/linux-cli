@@ -1,3 +1,4 @@
+import datetime
 import getpass
 import inspect
 import os
@@ -8,8 +9,7 @@ from proton.constants import VERSION as proton_version
 from protonvpn_nm_lib import exceptions
 from protonvpn_nm_lib.api import protonvpn
 from protonvpn_nm_lib.constants import APP_VERSION as lib_version
-from protonvpn_nm_lib.constants import (SERVER_TIERS, SUPPORTED_FEATURES,
-                                        SUPPORTED_PROTOCOLS)
+from protonvpn_nm_lib.constants import SUPPORTED_PROTOCOLS
 from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
                                     ConnectionStartStatusEnum,
                                     ConnectionStatusEnum, ConnectionTypeEnum,
@@ -21,7 +21,8 @@ from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
                                     VPNConnectionStateEnum)
 
 from .cli_dialog import ProtonVPNDialog
-from .constants import APP_VERSION
+from .constants import (APP_VERSION, KILLSWITCH_STATUS_TEXT, SERVER_TIERS,
+                        SUPPORTED_FEATURES)
 from .logger import logger
 
 
@@ -150,7 +151,7 @@ class CLIWrapper:
         relogin_msg = "If you've recently upgraded your plan, please re-login."
 
         try:
-            self.protonvpn.setup_connection(
+            server = self.protonvpn.setup_connection(
                 connection_type=connect_type,
                 connection_type_extra_arg=connect_type_extra_arg,
                 protocol=protocol
@@ -202,6 +203,7 @@ class CLIWrapper:
                 "Please ensure that you have an active internet connection.\n"
                 "If the issue persists, please contact support."
             )
+            return
         except exceptions.DefaultOVPNPortsNotFoundError as e:
             logger.exception(e)
             print(
@@ -273,7 +275,7 @@ class CLIWrapper:
 
         logger.info("Dbus response: {}".format(connect_response))
 
-        state = connect_response[ConnectionStartStatusEnum.STATE]
+        state = connect_response.get(ConnectionStartStatusEnum.STATE, None)
 
         if state == VPNConnectionStateEnum.IS_ACTIVE:
             print("\nSuccessfully connected to ProtonVPN.")
@@ -456,7 +458,9 @@ class CLIWrapper:
         print(confirmation_message)
 
     def list_configurations(self, _):
-        user_settings_dict = self.user_settings.get_user_settings(True)
+        user_settings_dict = self.__transform_user_setting_to_readable_format(
+            self.user_settings.get_user_settings()
+        )
 
         status_to_print = dedent("""
             ProtonVPN User Settings
@@ -472,6 +476,56 @@ class CLIWrapper:
             netshield=user_settings_dict[DisplayUserSettingsEnum.NETSHIELD],
         )
         print(status_to_print)
+
+    def __transform_user_setting_to_readable_format(self, raw_format):
+        """Transform the dict in raw_format to human readeable format.
+
+        Args:
+            raw_format (dict)
+
+        Returns:
+            dict
+        """
+        raw_protocol = raw_format[DisplayUserSettingsEnum.PROTOCOL]
+        raw_ks = raw_format[DisplayUserSettingsEnum.KILLSWITCH]
+        raw_dns = raw_format[DisplayUserSettingsEnum.DNS]
+        raw_custom_dns = raw_format[DisplayUserSettingsEnum.CUSTOM_DNS]
+        raw_ns = raw_format[DisplayUserSettingsEnum.NETSHIELD]
+
+        # protocol
+        if raw_protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]: # noqa
+            transformed_protocol = "OpenVPN ({})".format(
+                raw_protocol.value.upper()
+            )
+        else:
+            transformed_protocol = raw_protocol.value.upper()
+
+        # killswitch
+        transformed_ks = KILLSWITCH_STATUS_TEXT[raw_ks]
+
+        # dns
+        dns_status = {
+            UserSettingStatusEnum.ENABLED: "Automatic",
+            UserSettingStatusEnum.CUSTOM: "Custom: {}".format(
+                ", ".join(raw_custom_dns)
+            ),
+        }
+        transformed_dns = dns_status[raw_dns]
+
+        # netshield
+        netshield_status = {
+            NetshieldTranslationEnum.MALWARE: "Malware", # noqa
+            NetshieldTranslationEnum.ADS_MALWARE: "Ads and malware", # noqa
+            NetshieldTranslationEnum.DISABLED: "Disabled" # noqa
+        }
+        transformed_ns = netshield_status[raw_ns]
+
+        return {
+            DisplayUserSettingsEnum.PROTOCOL: transformed_protocol,
+            DisplayUserSettingsEnum.KILLSWITCH: transformed_ks,
+            DisplayUserSettingsEnum.DNS: transformed_dns,
+            DisplayUserSettingsEnum.NETSHIELD: transformed_ns,
+        }
 
     def restore_default_configurations(self, _):
         """Restore default configurations."""
@@ -503,17 +557,19 @@ class CLIWrapper:
             return
 
         logger.info("Gathering connection information")
-        conn_status_dict = self.protonvpn.get_connection_status()
+        conn_status_dict = self.__transform_status_to_readable_format(
+            self.protonvpn.get_connection_status()
+        )
         server = conn_status_dict.pop(
             ConnectionStatusEnum.SERVER_INFORMATION
         )
 
-        server_feature_enum = FeatureEnum(server.features)
         tier_enum = ServerTierEnum(server.tier)
 
-        feature = "Server Features: " + ", ".join(
-            [SUPPORTED_FEATURES[server_feature_enum]]
-        ) + "\n"
+        features = ", ".join(
+            [SUPPORTED_FEATURES[feature] for feature in server.features]
+        )
+        features = "Server Features: " + features
 
         entry_country = self.protonvpn.country.get_country_name(
             server.entry_country
@@ -534,18 +590,26 @@ class CLIWrapper:
             {features}Kill switch: \t {killswitch_status}
             Connection time: {time}
         """).format(
-            server_ip=conn_status_dict[ConnectionStatusEnum.SERVER_IP],
+            server_ip="(Missing)"
+            if not ConnectionStatusEnum.SERVER_IP
+            else conn_status_dict[ConnectionStatusEnum.SERVER_IP],
             country=exit_country,
             city=server.city,
             server=server.name,
             load=int(server.load),
             server_tier=SERVER_TIERS[tier_enum],
-            features=feature
-            if server_feature_enum != FeatureEnum.NORMAL
-            else "",
+            features=""
+            if (
+                len(server.features) == 0
+                or (
+                    len(server.features) == 1
+                    and FeatureEnum.NORMAL in server.features
+                )
+            )
+            else features + "\n",
             secure_core=(
                 "{} >> ".format(entry_country)
-                if server_feature_enum == FeatureEnum.SECURE_CORE
+                if FeatureEnum.SECURE_CORE in server.features
                 else ""
             ),
             killswitch_status=conn_status_dict[
@@ -555,3 +619,84 @@ class CLIWrapper:
             time=conn_status_dict[ConnectionStatusEnum.TIME],
         )
         print(status_to_print)
+
+    def __transform_status_to_readable_format(self, raw_dict):
+        """Transform raw dict to human redeable vales:
+
+        Args:
+            raw_dict (dict)
+
+        Returns:
+            dict
+        """
+        server_information_dict = raw_dict[
+            ConnectionStatusEnum.SERVER_INFORMATION
+        ]
+        raw_protocol = raw_dict[ConnectionStatusEnum.PROTOCOL]
+        raw_ks = raw_dict[ConnectionStatusEnum.KILLSWITCH]
+        raw_ns = raw_dict[ConnectionStatusEnum.NETSHIELD]
+        raw_time = raw_dict[ConnectionStatusEnum.TIME]
+        server_ip = raw_dict[ConnectionStatusEnum.SERVER_IP]
+
+        # protocol
+        if raw_protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]: # noqa
+            transformed_protocol = "OpenVPN ({})".format(
+                raw_protocol.value.upper()
+            )
+        else:
+            transformed_protocol = raw_protocol.value.upper()
+
+        ks_add_extra = ""
+        logger.info("KS status: {} - User setting: {}".format(
+            raw_ks, self.user_settings.killswitch
+        ))
+
+        if (
+            raw_ks == KillswitchStatusEnum.DISABLED
+            and self.user_settings.killswitch != KillswitchStatusEnum.DISABLED
+        ):
+            ks_add_extra = "(Inactive, restart connection to activate KS)"
+
+        transformed_ks = KILLSWITCH_STATUS_TEXT[
+            self.user_settings.killswitch
+        ] + " " + ks_add_extra
+
+        # netshield
+        netshield_status = {
+            NetshieldTranslationEnum.MALWARE: "Malware", # noqa
+            NetshieldTranslationEnum.ADS_MALWARE: "Ads and malware", # noqa
+            NetshieldTranslationEnum.DISABLED: "Disabled" # noqa
+        }
+        transformed_ns = netshield_status[raw_ns]
+
+        transformed_time = self.__convert_time_from_epoch(
+            raw_time
+        )
+
+        return {
+            ConnectionStatusEnum.SERVER_INFORMATION: server_information_dict, # noqa
+            ConnectionStatusEnum.PROTOCOL: transformed_protocol,
+            ConnectionStatusEnum.KILLSWITCH: transformed_ks,
+            ConnectionStatusEnum.TIME: transformed_time,
+            ConnectionStatusEnum.NETSHIELD: transformed_ns,
+            ConnectionStatusEnum.SERVER_IP: server_ip,
+        }
+
+    def __convert_time_from_epoch(self, seconds_since_epoch):
+        """Convert time from epoch to 24h.
+
+        Args:
+           time_in_epoch (string): time in seconds since epoch
+
+        Returns:
+            string: time in 24h format, since last connection was made
+        """
+        connection_time = (
+            time.time()
+            - int(seconds_since_epoch)
+        )
+        return str(
+            datetime.timedelta(
+                seconds=connection_time
+            )
+        ).split(".")[0]
