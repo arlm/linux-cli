@@ -83,6 +83,7 @@ class CLIWrapper:
         try:
             self.protonvpn.login(username, password)
         except (exceptions.ProtonVPNException, Exception) as e:
+            logger.exception(e)
             print("\n{}".format(e))
             return
 
@@ -90,6 +91,10 @@ class CLIWrapper:
 
     def logout(self):
         """Proxymethod to logout user."""
+        if not self.protonvpn.check_session_exists():
+            print("\nNo ProtonVPN session was found, please login first.")
+            return
+
         if self.protonvpn.get_active_protonvpn_connection():
             user_choice = input(
                 "\nLogging out will disconnect the active VPN connection.\n"
@@ -103,6 +108,7 @@ class CLIWrapper:
         try:
             self.protonvpn.logout()
         except exceptions.KeyringDataNotFound as e:
+            logger.exception(e)
             print("\n{}".format(e))
             return
         except (exceptions.ProtonVPNException, Exception) as e:
@@ -270,6 +276,7 @@ class CLIWrapper:
         try:
             connect_response = self.protonvpn.connect()
         except Exception as e:
+            logger.exception(e)
             print("\n{}".format(e))
             return
 
