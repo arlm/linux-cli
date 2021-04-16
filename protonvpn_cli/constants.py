@@ -1,26 +1,6 @@
-from protonvpn_nm_lib.enums import FeatureEnum, ServerTierEnum, KillswitchStatusEnum
-
 APP_VERSION = "3.4.1"
 LOGGER_NAME = "protonvpn-cli"
-SUPPORTED_FEATURES = {
-    FeatureEnum.NORMAL: "",
-    FeatureEnum.SECURE_CORE: "Secure-Core",
-    FeatureEnum.TOR: "Tor",
-    FeatureEnum.P2P: "P2P",
-    FeatureEnum.STREAMING: "Streaming",
-    FeatureEnum.IPv6: "IPv6"
-}
-SERVER_TIERS = {
-    ServerTierEnum.FREE: "Free",
-    ServerTierEnum.BASIC: "Basic",
-    ServerTierEnum.PLUS_VISIONARY: "Plus/Visionary",
-    ServerTierEnum.PM: "PMTEAM"
-}
-KILLSWITCH_STATUS_TEXT = {
-    KillswitchStatusEnum.HARD: "Permanent",
-    KillswitchStatusEnum.SOFT: "On",
-    KillswitchStatusEnum.DISABLED: "Off",
-}
+
 MAIN_CLI_HELP = """
 ProtonVPN CLI v{}
 
