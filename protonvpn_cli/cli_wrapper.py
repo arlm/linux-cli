@@ -91,6 +91,10 @@ class CLIWrapper:
 
     def logout(self):
         """Proxymethod to logout user."""
+        if not self.protonvpn.check_session_exists():
+            print("\nNo ProtonVPN session was found, please login first.")
+            return
+
         if self.protonvpn.get_active_protonvpn_connection():
             user_choice = input(
                 "\nLogging out will disconnect the active VPN connection.\n"
