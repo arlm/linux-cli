@@ -83,6 +83,7 @@ class CLIWrapper:
         try:
             self.protonvpn.login(username, password)
         except (exceptions.ProtonVPNException, Exception) as e:
+            logger.exception(e)
             print("\n{}".format(e))
             return
 
@@ -103,6 +104,7 @@ class CLIWrapper:
         try:
             self.protonvpn.logout()
         except exceptions.KeyringDataNotFound as e:
+            logger.exception(e)
             print("\n{}".format(e))
             return
         except (exceptions.ProtonVPNException, Exception) as e:
@@ -270,6 +272,7 @@ class CLIWrapper:
         try:
             connect_response = self.protonvpn.connect()
         except Exception as e:
+            logger.exception(e)
             print("\n{}".format(e))
             return
 
