@@ -2,11 +2,11 @@ import sys
 
 from dialog import Dialog
 from protonvpn_nm_lib import exceptions
-from protonvpn_nm_lib.constants import SERVER_TIERS, SUPPORTED_FEATURES
 from protonvpn_nm_lib.core.subprocess_wrapper import subprocess
 from protonvpn_nm_lib.country_codes import country_codes
-from protonvpn_nm_lib.enums import ProtocolEnum, ServerTierEnum, FeatureEnum
+from protonvpn_nm_lib.enums import ProtocolEnum, ServerTierEnum
 from .logger import logger
+from .constants import SUPPORTED_FEATURES, SERVER_TIERS
 
 
 class ProtonVPNDialog:
@@ -90,13 +90,15 @@ class ProtonVPNDialog:
                 servername
             )
             load = str(int(server.load)).rjust(3, " ")
-            feature = SUPPORTED_FEATURES[FeatureEnum(server.features)]
+            features = ", ".join(
+                [SUPPORTED_FEATURES[feature] for feature in server.features]
+            )
             tier = SERVER_TIERS[ServerTierEnum(server.tier)]
 
             choices.append(
                 (
                     servername, "Load: {0}% | {1} | {2}".format(
-                        load, tier, feature
+                        load, tier, features
                     )
                 )
             )
@@ -118,7 +120,7 @@ class ProtonVPNDialog:
 
     def display_dialog(self, headline, choices, stop=False):
         """Show dialog and process response."""
-        d = Dialog(dialog="dialog")
+        d = Dialog(dialog="dialog", autowidgetsize=True)
 
         code, tag = d.menu(headline, title="ProtonVPN-CLI", choices=choices)
         if code == "ok":

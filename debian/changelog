@@ -1,4 +1,10 @@
-protonvpn-cli (3.4.1-4) unstable; urgency=low
+protonvpn-cli (3.5.0-1) unstable; urgency=low
+
+  * Handle servers with multiple features
+
+ -- Proton Technologies AG <opensource@proton.me>  Tue, 30 Mar 2021 12:20:00 +0100
+ 
+ protonvpn-cli (3.4.1-4) unstable; urgency=low
 
   * Fix dialog crash
   * Remove "-" when displaying DNS servers after being added
