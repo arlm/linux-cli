@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
-%define version 3.4.1
-%define release 4
+%define version 3.5.0
+%define release 1
 
 Prefix: %{_prefix}
 
@@ -19,7 +19,7 @@ BuildRoot: %{_tmppath}/%{unmangled_name}-%{version}-%{release}-buildroot
 
 BuildRequires: python3-devel
 BuildRequires: python3-setuptools
-Requires: python3-protonvpn-nm-lib >= 0.5.0, python3-protonvpn-nm-lib < 0.6.0
+Requires: python3-protonvpn-nm-lib >= 3.0.0, python3-protonvpn-nm-lib < 3.1.0
 Requires: python3-dialog
 
 %{?python_disable_dependency_generator}
@@ -46,6 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Tue Mar 30 2021 Proton Technologies AG <opensource@proton.me> 3.5.0-1
+- Handle servers with multiple features
+
 * Tue Mar 30 2021 Proton Technologies AG <opensource@proton.me> 3.4.1-4
 - Fix dialog crash
 - Remove "-" when displaying DNS servers after being added
