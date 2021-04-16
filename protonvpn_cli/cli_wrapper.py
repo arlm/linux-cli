@@ -21,8 +21,7 @@ from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
                                     VPNConnectionStateEnum)
 
 from .cli_dialog import ProtonVPNDialog
-from .constants import (APP_VERSION, KILLSWITCH_STATUS_TEXT, SERVER_TIERS,
-                        SUPPORTED_FEATURES)
+from .constants import APP_VERSION
 from .logger import logger
 
 
@@ -56,6 +55,26 @@ class CLIWrapper:
             user_input = user_input.lower()
             if not user_input == "y":
                 return
+
+        self.SUPPORTED_FEATURES = {
+            FeatureEnum.NORMAL: "",
+            FeatureEnum.SECURE_CORE: "Secure-Core",
+            FeatureEnum.TOR: "Tor",
+            FeatureEnum.P2P: "P2P",
+            FeatureEnum.STREAMING: "Streaming",
+            FeatureEnum.IPv6: "IPv6"
+        }
+        self.SERVER_TIERS = {
+            ServerTierEnum.FREE: "Free",
+            ServerTierEnum.BASIC: "Basic",
+            ServerTierEnum.PLUS_VISIONARY: "Plus/Visionary",
+            ServerTierEnum.PM: "PMTEAM"
+        }
+        self.KILLSWITCH_STATUS_TEXT = {
+            KillswitchStatusEnum.HARD: "Permanent",
+            KillswitchStatusEnum.SOFT: "On",
+            KillswitchStatusEnum.DISABLED: "Off",
+        }
         self.DNS_REMINDER_MESSAGE = "These changes will apply " \
             "the next time you connect to VPN."
         self.CLI_CONNECT_DICT = dict(
@@ -157,7 +176,7 @@ class CLIWrapper:
         relogin_msg = "If you've recently upgraded your plan, please re-login."
 
         try:
-            server = self.protonvpn.setup_connection(
+            self.protonvpn.setup_connection(
                 connection_type=connect_type,
                 connection_type_extra_arg=connect_type_extra_arg,
                 protocol=protocol
@@ -508,7 +527,7 @@ class CLIWrapper:
             transformed_protocol = raw_protocol.value.upper()
 
         # killswitch
-        transformed_ks = KILLSWITCH_STATUS_TEXT[raw_ks]
+        transformed_ks = self.KILLSWITCH_STATUS_TEXT[raw_ks]
 
         # dns
         dns_status = {
@@ -574,7 +593,7 @@ class CLIWrapper:
         tier_enum = ServerTierEnum(server.tier)
 
         features = ", ".join(
-            [SUPPORTED_FEATURES[feature] for feature in server.features]
+            [self.SUPPORTED_FEATURES[feature] for feature in server.features]
         )
         features = "Server Features: " + features
 
@@ -604,7 +623,7 @@ class CLIWrapper:
             city=server.city,
             server=server.name,
             load=int(server.load),
-            server_tier=SERVER_TIERS[tier_enum],
+            server_tier=self.SERVER_TIERS[tier_enum],
             features=""
             if (
                 len(server.features) == 0
@@ -664,7 +683,7 @@ class CLIWrapper:
         ):
             ks_add_extra = "(Inactive, restart connection to activate KS)"
 
-        transformed_ks = KILLSWITCH_STATUS_TEXT[
+        transformed_ks = self.KILLSWITCH_STATUS_TEXT[
             self.user_settings.killswitch
         ] + " " + ks_add_extra
 
