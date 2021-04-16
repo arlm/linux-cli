@@ -4,15 +4,35 @@ from dialog import Dialog
 from protonvpn_nm_lib import exceptions
 from protonvpn_nm_lib.core.subprocess_wrapper import subprocess
 from protonvpn_nm_lib.country_codes import country_codes
-from protonvpn_nm_lib.enums import ProtocolEnum, ServerTierEnum
+from protonvpn_nm_lib.enums import (FeatureEnum, KillswitchStatusEnum,
+                                    ProtocolEnum, ServerTierEnum)
+
 from .logger import logger
-from .constants import SUPPORTED_FEATURES, SERVER_TIERS
 
 
 class ProtonVPNDialog:
 
     def __init__(self, protonvpn):
         self.protonvpn = protonvpn
+        self.SUPPORTED_FEATURES = {
+            FeatureEnum.NORMAL: "",
+            FeatureEnum.SECURE_CORE: "Secure-Core",
+            FeatureEnum.TOR: "Tor",
+            FeatureEnum.P2P: "P2P",
+            FeatureEnum.STREAMING: "Streaming",
+            FeatureEnum.IPv6: "IPv6"
+        }
+        self.SERVER_TIERS = {
+            ServerTierEnum.FREE: "Free",
+            ServerTierEnum.BASIC: "Basic",
+            ServerTierEnum.PLUS_VISIONARY: "Plus/Visionary",
+            ServerTierEnum.PM: "PMTEAM"
+        }
+        self.KILLSWITCH_STATUS_TEXT = {
+            KillswitchStatusEnum.HARD: "Permanent",
+            KillswitchStatusEnum.SOFT: "On",
+            KillswitchStatusEnum.DISABLED: "Off",
+        }
 
     def start(self):
         """Connect to server with a dialog menu.
@@ -91,9 +111,9 @@ class ProtonVPNDialog:
             )
             load = str(int(server.load)).rjust(3, " ")
             features = ", ".join(
-                [SUPPORTED_FEATURES[feature] for feature in server.features]
+                [self.SUPPORTED_FEATURES[feature] for feature in server.features]
             )
-            tier = SERVER_TIERS[ServerTierEnum(server.tier)]
+            tier = self.SERVER_TIERS[ServerTierEnum(server.tier)]
 
             choices.append(
                 (
