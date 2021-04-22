@@ -1,6 +1,7 @@
-protonvpn-cli (3.5.0-1) unstable; urgency=low
+protonvpn-cli (3.5.0-2) unstable; urgency=low
 
   * Handle servers with multiple features
+  * Fix server feature issue when displaying connection status
 
  -- Proton Technologies AG <opensource@proton.me>  Tue, 30 Mar 2021 12:20:00 +0100
  

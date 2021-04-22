@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.5.0
-%define release 1
+%define release 2
 
 Prefix: %{_prefix}
 
@@ -46,8 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Tue Mar 30 2021 Proton Technologies AG <opensource@proton.me> 3.5.0-1
+* Tue Mar 30 2021 Proton Technologies AG <opensource@proton.me> 3.5.0-2
 - Handle servers with multiple features
+- Fix server feature issue when displaying connection status
 
 * Tue Mar 30 2021 Proton Technologies AG <opensource@proton.me> 3.4.1-4
 - Fix dialog crash
