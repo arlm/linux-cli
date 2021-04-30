@@ -1,4 +1,10 @@
-protonvpn-cli (3.5.0-2) unstable; urgency=low
+protonvpn-cli (3.5.1-1) unstable; urgency=low
+
+  * Update dependency (protonvpn-nm-lib) version
+  
+ -- Proton Technologies AG <opensource@proton.me>  Fri, 30 Apr 2021 19:15:00 +0100
+
+  protonvpn-cli (3.5.0-2) unstable; urgency=low
 
   * Handle servers with multiple features
   * Fix server feature issue when displaying connection status
