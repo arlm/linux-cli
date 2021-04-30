@@ -1,3 +1,4 @@
+import copy
 import sys
 
 from dialog import Dialog
@@ -110,9 +111,21 @@ class ProtonVPNDialog:
                 servername
             )
             load = str(int(server.load)).rjust(3, " ")
-            features = ", ".join(
-                [self.SUPPORTED_FEATURES[feature] for feature in server.features]
-            )
+            _features = copy.copy(server.features)
+            try:
+                _features.pop(FeatureEnum.NORMAL)
+            except IndexError:
+                pass
+
+            if len(_features) > 1:
+                features = ", ".join(
+                    [self.SUPPORTED_FEATURES[feature] for feature in _features]
+                )
+            elif len(_features) == 1:
+                features = self.SUPPORTED_FEATURES[_features[0]]
+            else:
+                features = ""
+
             tier = self.SERVER_TIERS[ServerTierEnum(server.tier)]
 
             choices.append(

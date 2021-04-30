@@ -4,6 +4,7 @@ import inspect
 import os
 import time
 from textwrap import dedent
+import copy
 
 from proton.constants import VERSION as proton_version
 from protonvpn_nm_lib import exceptions
@@ -582,6 +583,12 @@ class CLIWrapper:
             print("\nNo active ProtonVPN connection.")
             return
 
+        # cache servers if needed
+        try:
+            self.protonvpn.get_session().servers
+        except: # noqa
+            pass
+
         logger.info("Gathering connection information")
         conn_status_dict = self.__transform_status_to_readable_format(
             self.protonvpn.get_connection_status()
@@ -591,12 +598,21 @@ class CLIWrapper:
         )
 
         tier_enum = ServerTierEnum(server.tier)
+        _features = copy.copy(server.features)
+        try:
+            _features.pop(FeatureEnum.NORMAL)
+        except IndexError:
+            pass
 
-        features = ", ".join(
-            [self.SUPPORTED_FEATURES[feature] for feature in server.features]
-        )
+        if len(_features) > 1:
+            features = ", ".join(
+                [self.SUPPORTED_FEATURES[feature] for feature in _features]
+            )
+        elif len(_features) == 1:
+            features = self.SUPPORTED_FEATURES[_features[0]]
+        else:
+            features = "None"
         features = "Server Features: " + features
-
         entry_country = self.protonvpn.country.get_country_name(
             server.entry_country
         )
@@ -625,17 +641,11 @@ class CLIWrapper:
             load=int(server.load),
             server_tier=self.SERVER_TIERS[tier_enum],
             features=""
-            if (
-                len(server.features) == 0
-                or (
-                    len(server.features) == 1
-                    and FeatureEnum.NORMAL in server.features
-                )
-            )
+            if len(_features) == 0
             else features + "\n",
             secure_core=(
                 "{} >> ".format(entry_country)
-                if FeatureEnum.SECURE_CORE in server.features
+                if FeatureEnum.SECURE_CORE in _features
                 else ""
             ),
             killswitch_status=conn_status_dict[
