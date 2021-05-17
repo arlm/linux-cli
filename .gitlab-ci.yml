@@ -67,31 +67,8 @@ make-image-arch:
  script:
    - make image-arch branch=$CI_COMMIT_REF_SLUG src=archlinux
 
-## Once the CI is green, we retag the current branch-master to latest
-publish-latest-deb:
- stage: image-latest
- extends: .common-image
- dependencies: [] # Prevent download + extract artifacts
- only:
-   - master
- except:
-   - schedules
-   - triggers
- script:
-   - make latest src=ubuntu
 
-publish-latest-rpm:
- extends: publish-latest-deb
- script:
-   - make latest src=fedora
-   
-publish-latest-arch:
- extends: publish-latest-deb
- script:
-   - make latest src=archlinux
-
-
-######## CI Jobs ##########
+######## CI Test Jobs ##########
 test-deb:
  stage: test
  image: $CI_REGISTRY_IMAGE:branch-$CI_COMMIT_REF_SLUG-ubuntu
@@ -117,16 +94,24 @@ test-arch:
 # Jobs to publish commits + tags from master to github
 release-publish-github:
   stage: release
+  needs:
+   - job: build-deb
+   - job: build-rpm
+  when: manual
   variables:
-    RELEASE_SYNC_PUBLIC_URL: git@github.com:protonvpn/linux-cli.git
+    RELEASE_SYNC_PUBLIC_URL: git@github.com:ProtonVPN/linux-cli.git
     RELEASE_SYNC_TO_BRANCH: 'master'
     RELEASE_SYNC_FROM_BRANCH: 'master'
   extends: .release-sync-commit-shared
 
 release-publish-github-tags:
   stage: release
+  needs:
+   - job: build-deb
+   - job: build-rpm
+  when: manual
   variables:
-    RELEASE_SYNC_PUBLIC_URL: git@github.com:protonvpn/linux-cli.git
+    RELEASE_SYNC_PUBLIC_URL: git@github.com:ProtonVPN/linux-cli.git
     RELEASE_SYNC_TO_BRANCH: 'master'
     RELEASE_SYNC_FROM_BRANCH: 'master'
   extends: .release-sync-tags-shared
