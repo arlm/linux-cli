@@ -1,4 +1,4 @@
-protonvpn-cli (3.5.1-1) unstable; urgency=low
+protonvpn-cli (3.5.1-1) stable; urgency=low
 
   * Update dependency (protonvpn-nm-lib) version
   
