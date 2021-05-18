@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import find_packages, setup
+from protonvpn_cli.constants import APP_VERSION
 
 long_description = """
 Official ProtonVPN CLI for Linux based systems.
@@ -8,11 +9,11 @@ Official ProtonVPN CLI for Linux based systems.
 
 setup(
     name="protonvpn-cli",
-    version="0.0.1",
+    version=APP_VERSION,
     packages=find_packages(),
     entry_points={
         "console_scripts": [
-            "protonvpn-cli = protonvpn_cli.cli:NetworkManagerPrototypeCLI"
+            "protonvpn-cli = protonvpn_cli.main:main"
         ]
     },
     description="Official ProtonVPN CLI for Linux",
@@ -20,7 +21,7 @@ setup(
     author_email="contact@protonvpn.com",
     long_description=long_description,
     install_requires=[
-        "protonvpn-nm-lib", "pythondialog"
+        "protonvpn-nm-lib~=3.1.0", "pythondialog"
     ],
     include_package_data=True,
     license="GPLv3",
