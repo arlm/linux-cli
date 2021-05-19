@@ -223,11 +223,6 @@ class ProtonVPNCLI:
             help="Block malware, ads, & trackers.",
             action="store_true",
         )
-        group.add_argument(
-            "-s", "--status",
-            help="Display NetShield status.",
-            action="store_true"
-        )
         parser.add_argument(
             "-h", "--help", required=False, action="store_true"
         )
