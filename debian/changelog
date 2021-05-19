@@ -1,4 +1,4 @@
-protonvpn-cli (3.5.2-1) unstable; urgency=medium
+protonvpn-cli (3.5.2-2) unstable; urgency=medium
 
   * Bugfix: fixed crash when trying to display netshield status
   
