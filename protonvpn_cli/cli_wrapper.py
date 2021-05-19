@@ -369,14 +369,6 @@ class CLIWrapper:
             NetshieldTranslationEnum.DISABLED: "Netshield has been disabled."
         }
 
-        if args.status:
-            print(
-                "\n" + contextual_confirmation_msg[
-                    self.user_conf_manager.netshield
-                ]
-            )
-            return
-
         options_dict = dict(
             malware=NetshieldTranslationEnum.MALWARE,
             ads_malware=NetshieldTranslationEnum.ADS_MALWARE,

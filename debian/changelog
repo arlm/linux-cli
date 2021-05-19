@@ -1,4 +1,10 @@
-protonvpn-cli (3.5.1-1) stable; urgency=low
+protonvpn-cli (3.5.2-2) stable; urgency=medium
+
+  * Bugfix: fixed crash when trying to display netshield status
+  
+ -- Proton Technologies AG <opensource@proton.me>  Fri, 19 May 2021 11:00:00 +0100
+ 
+ protonvpn-cli (3.5.1-1) unstable; urgency=low
 
   * Update dependency (protonvpn-nm-lib) version
   
