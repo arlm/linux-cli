@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
-%define version 3.5.2
-%define release 2
+%define version 3.5.3
+%define release 1
 
 Prefix: %{_prefix}
 
@@ -46,7 +46,10 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Fri May 19 2021 Proton Technologies AG <opensource@proton.me> 3.5.2-2
+* Thu May 20 2021 Proton Technologies AG <opensource@proton.me> 3.5.3-1
+- Bugfix: fixed crash when trying to display netshield help
+
+* Wed May 19 2021 Proton Technologies AG <opensource@proton.me> 3.5.2-2
 - Bugfix: fixed crash when trying to display netshield status
 
 * Fri Apr 30 2021 Proton Technologies AG <opensource@proton.me> 3.5.1-1
