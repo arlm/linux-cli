@@ -231,7 +231,6 @@ class ProtonVPNCLI:
             not args.help
             and not args.malware
             and not args.ads_malware
-            and not args.status
             and not args.off
         ):
             print(NETSHIELD_HELP)

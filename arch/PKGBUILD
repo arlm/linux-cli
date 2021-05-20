@@ -1,6 +1,6 @@
 # Maintainer: Proton Technologies AG <opensource@proton.me>
 pkgname=protonvpn-cli
-pkgver=3.5.2
+pkgver=3.5.3
 pkgrel=2
 pkgdesc="Official ProtonVPN CLI."
 arch=("any")
