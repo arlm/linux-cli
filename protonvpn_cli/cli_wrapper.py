@@ -89,6 +89,7 @@ class CLIWrapper:
         )
         self.protonvpn = protonvpn
         self.user_settings = self.protonvpn.get_settings()
+        self.client_config = self.protonvpn.get_session().clientconfig
         self.dialog = ProtonVPNDialog(self.protonvpn)
 
     def login(self, username=None):
@@ -348,6 +349,10 @@ class CLIWrapper:
             Namespace (object): list objects with cli args
         """
         logger.info("Setting netshield to: {}".format(args))
+        if not self.client_config.features.netshield:
+            print("\nThis feature is currently not supported.")
+            return
+
         session = self.protonvpn.get_session()
         if not args.off and session.vpn_tier == ServerTierEnum.FREE.value:
             print(
@@ -399,6 +404,7 @@ class CLIWrapper:
             dns=self.set_automatic_dns,
             ip=self.set_custom_dns,
             list=self.list_configurations,
+            vpn_accelerator=self.set_vpn_accelerator,
             default=self.restore_default_configurations,
         )
 
@@ -475,6 +481,32 @@ class CLIWrapper:
                 self.DNS_REMINDER_MESSAGE
             )
         print(confirmation_message)
+
+    def set_vpn_accelerator(self, status):
+        if not self.client_config.features.vpn_accelerator:
+            print("\nThis feature is currently not supported.")
+            return
+
+        status = (
+            UserSettingStatusEnum.ENABLED
+            if status == "on"
+            else UserSettingStatusEnum.DISABLED
+        )
+
+        try:
+            self.user_settings.vpn_accelerator = status
+        except Exception as e:
+            logger.exception(e)
+            print(e)
+            return
+
+        reconnect_message = "If connected to VPN, please reconnect for " \
+            "changes to take effect."
+        contextual_message = "VPN accelerator has been disabled."
+        if status == UserSettingStatusEnum.ENABLED:
+            contextual_message = "VPN accelerator has been enabled."
+
+        print("\n{} {}".format(contextual_message, reconnect_message))
 
     def list_configurations(self, _):
         user_settings_dict = self.__transform_user_setting_to_readable_format(
