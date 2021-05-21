@@ -128,7 +128,7 @@ examples:
 
 NETSHIELD_HELP = """
 usage:  protonvpn-cli (ns | netshield) [-h | --help]
-        [--off | --malware | --ads-malware | [-s | --show ]]
+        [--off | --malware | --ads-malware]
 
 optional arguments:
     --off           Disable NetShield.
