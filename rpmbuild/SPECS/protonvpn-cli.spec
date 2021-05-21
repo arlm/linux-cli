@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
-%define version 3.5.3
-%define release 2
+%define version 3.6.0
+%define release 1
 
 Prefix: %{_prefix}
 
@@ -19,7 +19,7 @@ BuildRoot: %{_tmppath}/%{unmangled_name}-%{version}-%{release}-buildroot
 
 BuildRequires: python3-devel
 BuildRequires: python3-setuptools
-Requires: python3-protonvpn-nm-lib >= 3.1.0, python3-protonvpn-nm-lib < 3.2.0
+Requires: python3-protonvpn-nm-lib >= 3.2.0, python3-protonvpn-nm-lib < 3.3.0
 Requires: python3-dialog
 
 %{?python_disable_dependency_generator}
@@ -46,6 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Fri May 21 2021 Proton Technologies AG <opensource@proton.me> 3.6.0-1
+- Feature: Add vpn accelerator
+
 * Thu May 20 2021 Proton Technologies AG <opensource@proton.me> 3.5.3-2
 - Bugfix: fixed crash when trying to display netshield help
 

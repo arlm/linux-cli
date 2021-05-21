@@ -4,11 +4,12 @@ import sys
 from proton.constants import VERSION as proton_version
 from protonvpn_nm_lib.constants import APP_VERSION as lib_version
 from protonvpn_nm_lib.enums import ProtocolEnum
-from .logger import logger
 
 from .cli_wrapper import CLIWrapper
-from .constants import (APP_VERSION, CONFIG_HELP, CONNECT_HELP, KS_HELP,
-                        LOGIN_HELP, MAIN_CLI_HELP, NETSHIELD_HELP)
+from .constants import (APP_VERSION, CONFIG_HELP,
+                        CONNECT_HELP, KS_HELP, LOGIN_HELP, MAIN_CLI_HELP,
+                        NETSHIELD_HELP)
+from .logger import logger
 
 
 class ProtonVPNCLI:
@@ -295,6 +296,17 @@ class ProtonVPNCLI:
             action="store_true"
         )
         group.add_argument(
+            "--vpn-accelerator",
+            help="VPN Accelerator enables a set of unique performance "
+            "enhancing technologies which can increase VPN speeds "
+            "by up to 200%",
+            nargs=1,
+            choices=[
+                "on",
+                "off",
+            ]
+        )
+        group.add_argument(
             "-l", "--list",
             help="List user settings.",
             action="store_true"
@@ -312,6 +324,7 @@ class ProtonVPNCLI:
                 and not args.help
                 and not args.default
                 and not args.list
+                and not args.vpn_accelerator
             )
         ):
             print(CONFIG_HELP)

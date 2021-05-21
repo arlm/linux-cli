@@ -1,4 +1,4 @@
-APP_VERSION = "3.5.3"
+APP_VERSION = "3.6.0"
 LOGGER_NAME = "protonvpn-cli"
 
 MAIN_CLI_HELP = """
@@ -80,20 +80,22 @@ examples:
     protonvpn-cli connect --tor
     protonvpn-cli c --random --protocol udp
     protonvpn-cli c --help
-""" # noqa
+"""
 
 CONFIG_HELP = """
 usage:  protonvpn-cli config [-h | --help]
-        [[--list | -l] | --dns <command> [--ip <IP>] | [-p | --protocol] <protocol> | [-d | --default]]
+        [[--list | -l] | --dns <command> [--ip <IP>] | [-p | --protocol] <protocol> | [-d | --default] | --vpn-accelerator]
 
 optional arguments:
-    --dns <command> Change DNS configurations
-                    (custom | automatic).
-    --ip            Custom DNS IP (max 3 IPs).
-    -l, --list      List all configurations.
-    -p, --protocol  Change default protocol.
-    -d, --default   Reset to default configurations.
-    -h, --help      Display help message.
+    --dns <command>     Change DNS configurations
+                        (custom | automatic).
+    --ip                Custom DNS IP (max 3 IPs).
+    -l, --list          List all configurations.
+    -p, --protocol      Change default protocol.
+    -d, --default       Reset to default configurations.
+    --vpn-accelerator   VPN Accelerator enables a set of unique performance
+                        enhancing technologies which can increase VPN speeds by up to 200%.
+    -h, --help          Display help message.
 
 examples:
     protonvpn-cli config --dns automatic
@@ -101,6 +103,7 @@ examples:
     protonvpn-cli config (-l | --list)
     protonvpn-cli config -p tcp
     protonvpn-cli config --protocol udp
+    protonvpn-cli config --vpn-accelerator on
     protonvpn-cli config (-d | --default)
     protonvpn-cli config --help
 """ # noqa
@@ -128,7 +131,7 @@ examples:
 
 NETSHIELD_HELP = """
 usage:  protonvpn-cli (ns | netshield) [-h | --help]
-        [--off | --malware | --ads-malware | [-s | --show ]]
+        [--off | --malware | --ads-malware]
 
 optional arguments:
     --off           Disable NetShield.
@@ -141,4 +144,4 @@ examples:
     protonvpn-cli (ns | netshield) --ads-malware
     protonvpn-cli (ns | netshield) --off
     protonvpn-cli (ns | netshield) --help
-""" # noqa
+"""
