@@ -21,12 +21,12 @@ setup(
     author_email="contact@protonvpn.com",
     long_description=long_description,
     install_requires=[
-        "protonvpn-nm-lib~=3.1.0", "pythondialog"
+        "protonvpn-nm-lib~=3.2.0", "pythondialog"
     ],
     include_package_data=True,
     license="GPLv3",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Topic :: Security",
         "Environment :: Console",
         "Intended Audience :: End Users/Desktop",
