@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.6.0
-%define release 1
+%define release 2
 
 Prefix: %{_prefix}
 
@@ -46,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Fri May 21 2021 Proton Technologies AG <opensource@proton.me> 3.6.0-1
+* Fri May 21 2021 Proton Technologies AG <opensource@proton.me> 3.6.0-2
 - Feature: Add vpn accelerator
 
 * Thu May 20 2021 Proton Technologies AG <opensource@proton.me> 3.5.3-2
