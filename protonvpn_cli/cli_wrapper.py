@@ -1,15 +1,12 @@
+import copy
 import datetime
 import getpass
 import inspect
-import os
 import time
 from textwrap import dedent
-import copy
 
-from proton.constants import VERSION as proton_version
 from protonvpn_nm_lib import exceptions
 from protonvpn_nm_lib.api import protonvpn
-from protonvpn_nm_lib.constants import APP_VERSION as lib_version
 from protonvpn_nm_lib.constants import SUPPORTED_PROTOCOLS
 from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
                                     ConnectionStartStatusEnum,
@@ -22,41 +19,11 @@ from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
                                     VPNConnectionStateEnum)
 
 from .cli_dialog import ProtonVPNDialog
-from .constants import APP_VERSION
 from .logger import logger
 
 
 class CLIWrapper:
     def __init__(self):
-        logger.info(
-            "\n"
-            + "---------------------"
-            + "----------------"
-            + "------------\n\n"
-            + "-----------\t"
-            + "Initialized protonvpn-cli"
-            + "\t-----------\n\n"
-            + "---------------------"
-            + "----------------"
-            + "------------"
-        )
-        logger.info(
-            "ProtonVPN CLI v{} "
-            "(protonvpn-nm-lib v{}; proton-client v{})".format(
-                APP_VERSION, lib_version, proton_version
-            )
-        )
-        if "SUDO_UID" in os.environ:
-            print(
-                "\nRunning ProtonVPN as root is not supported and "
-                "is highly discouraged, as it might introduce "
-                "undesirable side-effects."
-            )
-            user_input = input("Are you sure that you want to proceed (y/N): ")
-            user_input = user_input.lower()
-            if not user_input == "y":
-                return
-
         self.SUPPORTED_FEATURES = {
             FeatureEnum.NORMAL: "",
             FeatureEnum.SECURE_CORE: "Secure-Core",
@@ -89,7 +56,6 @@ class CLIWrapper:
         )
         self.protonvpn = protonvpn
         self.user_settings = self.protonvpn.get_settings()
-        self.client_config = self.protonvpn.get_session().clientconfig
         self.dialog = ProtonVPNDialog(self.protonvpn)
 
     def login(self, username=None):
@@ -241,21 +207,25 @@ class CLIWrapper:
             return
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
-            print("\n{}".format(e))
+            print(
+                "\nAn unknown error has occured. Please ensure that you have "
+                "internet connectivity."
+                "\nIf the issue persists, please contact support."
+            )
             return
 
         self._connect()
 
     def disconnect(self):
         """Proxymethod to disconnect from ProtonVPN."""
-        print("Disconnecting from ProtonVPN.")
+        print("Attempting to disconnect from ProtonVPN.")
 
         try:
             self.protonvpn.disconnect()
         except exceptions.ConnectionNotFound:
             print(
                 "\nNo ProtonVPN connection was found. "
-                "Please connect first to ProtonVPN."
+                "Please connect first to a ProtonVPN server."
             )
             return
         except (exceptions.ProtonVPNException, Exception) as e:
@@ -349,7 +319,10 @@ class CLIWrapper:
             Namespace (object): list objects with cli args
         """
         logger.info("Setting netshield to: {}".format(args))
-        if not self.client_config.features.netshield:
+        if not self.protonvpn.check_session_exists():
+            print("\nPlease login to to be able to set NetShield.")
+            return
+        if not self.protonvpn.get_session().clientconfig.features.netshield:
             print("\nThis feature is currently not supported.")
             return
 
@@ -483,6 +456,9 @@ class CLIWrapper:
         print(confirmation_message)
 
     def set_vpn_accelerator(self, status):
+        if not self.protonvpn.check_session_exists():
+            print("\nPlease login to be able to set VPN Accelerator.")
+            return
         if not self.client_config.features.vpn_accelerator:
             print("\nThis feature is currently not supported.")
             return
@@ -520,11 +496,13 @@ class CLIWrapper:
             Kill Switch: \t  {killswitch}
             Netshield: \t  {netshield}
             DNS: \t\t  {dns}
+            VPN Accelerator:  {vpn_accel}
         """).format(
             protocol=user_settings_dict[DisplayUserSettingsEnum.PROTOCOL],
             killswitch=user_settings_dict[DisplayUserSettingsEnum.KILLSWITCH],
             dns=user_settings_dict[DisplayUserSettingsEnum.DNS],
             netshield=user_settings_dict[DisplayUserSettingsEnum.NETSHIELD],
+            vpn_accel=user_settings_dict[DisplayUserSettingsEnum.VPN_ACCELERATOR],
         )
         print(status_to_print)
 
@@ -542,6 +520,7 @@ class CLIWrapper:
         raw_dns = raw_format[DisplayUserSettingsEnum.DNS]
         raw_custom_dns = raw_format[DisplayUserSettingsEnum.CUSTOM_DNS]
         raw_ns = raw_format[DisplayUserSettingsEnum.NETSHIELD]
+        raw_vpn_accel = raw_format[DisplayUserSettingsEnum.VPN_ACCELERATOR]
 
         # protocol
         if raw_protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]: # noqa
@@ -571,11 +550,15 @@ class CLIWrapper:
         }
         transformed_ns = netshield_status[raw_ns]
 
+        # vpn accelerator
+        transformed_vpn_accel = "On" if raw_vpn_accel == UserSettingStatusEnum.ENABLED else "Off"
+
         return {
             DisplayUserSettingsEnum.PROTOCOL: transformed_protocol,
             DisplayUserSettingsEnum.KILLSWITCH: transformed_ks,
             DisplayUserSettingsEnum.DNS: transformed_dns,
             DisplayUserSettingsEnum.NETSHIELD: transformed_ns,
+            DisplayUserSettingsEnum.VPN_ACCELERATOR: transformed_vpn_accel,
         }
 
     def restore_default_configurations(self, _):

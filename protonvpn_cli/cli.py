@@ -36,6 +36,24 @@ class ProtonVPNCLI:
             print(MAIN_CLI_HELP)
             parser.exit(1)
 
+        logger.info(
+            "\n"
+            + "---------------------"
+            + "----------------"
+            + "------------\n\n"
+            + "-----------\t"
+            + "Initialized protonvpn-cli"
+            + "\t-----------\n\n"
+            + "---------------------"
+            + "----------------"
+            + "------------"
+        )
+        logger.info(
+            "ProtonVPN CLI v{} "
+            "(protonvpn-nm-lib v{}; proton-client v{})".format(
+                APP_VERSION, lib_version, proton_version
+            )
+        )
         logger.info("CLI command: {}".format(args))
         self.cli_wrapper = CLIWrapper()
         getattr(self, args.command)()
@@ -317,8 +335,8 @@ class ProtonVPNCLI:
 
         logger.info("Config command: {}".format(args2))
         if (
-            args.help or
-            (
+            args.help
+            or (
                 not args.dns
                 and not args.protocol
                 and not args.help
