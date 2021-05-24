@@ -459,7 +459,7 @@ class CLIWrapper:
         if not self.protonvpn.check_session_exists():
             print("\nPlease login to be able to set VPN Accelerator.")
             return
-        if not self.client_config.features.vpn_accelerator:
+        if not self.protonvpn.get_session().clientconfig.features.vpn_accelerator:
             print("\nThis feature is currently not supported.")
             return
 
