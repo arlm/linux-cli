@@ -322,9 +322,11 @@ class CLIWrapper:
         if not self.protonvpn.check_session_exists():
             print("\nPlease login to to be able to set NetShield.")
             return
-        if not self.protonvpn.get_session().clientconfig.features.netshield:
-            print("\nThis feature is currently not supported.")
-            return
+
+        # To-do: Once infra is updated, implement this check
+        # if not self.protonvpn.get_session().clientconfig.features.netshield:
+        #     print("\nThis feature is currently not supported.")
+        #     return
 
         session = self.protonvpn.get_session()
         if not args.off and session.vpn_tier == ServerTierEnum.FREE.value:
