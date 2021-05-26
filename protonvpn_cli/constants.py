@@ -84,7 +84,7 @@ examples:
 
 CONFIG_HELP = """
 usage:  protonvpn-cli config [-h | --help]
-        [[--list | -l] | --dns <command> [--ip <IP>] | [-p | --protocol] <protocol> | [-d | --default] | --vpn-accelerator]
+        [[--list | -l] | --dns <command> [--ip <IP>] | [-p | --protocol] <protocol> | [-d | --default]]
 
 optional arguments:
     --dns <command>     Change DNS configurations
@@ -93,8 +93,6 @@ optional arguments:
     -l, --list          List all configurations.
     -p, --protocol      Change default protocol.
     -d, --default       Reset to default configurations.
-    --vpn-accelerator   VPN Accelerator enables a set of unique performance
-                        enhancing technologies which can increase VPN speeds by up to 200%.
     -h, --help          Display help message.
 
 examples:
@@ -103,7 +101,6 @@ examples:
     protonvpn-cli config (-l | --list)
     protonvpn-cli config -p tcp
     protonvpn-cli config --protocol udp
-    protonvpn-cli config --vpn-accelerator on
     protonvpn-cli config (-d | --default)
     protonvpn-cli config --help
 """ # noqa

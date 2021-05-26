@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.6.0
-%define release 2
+%define release 3
 
 Prefix: %{_prefix}
 
@@ -46,8 +46,8 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Fri May 21 2021 Proton Technologies AG <opensource@proton.me> 3.6.0-2
-- Feature: Add vpn accelerator
+* Fri May 21 2021 Proton Technologies AG <opensource@proton.me> 3.6.0-3
+- Update to latest library version (3.2.0 =< and < 3.3.0)
 
 * Thu May 20 2021 Proton Technologies AG <opensource@proton.me> 3.5.3-2
 - Bugfix: fixed crash when trying to display netshield help

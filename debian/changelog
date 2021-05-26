@@ -1,6 +1,6 @@
-protonvpn-cli (3.6.0-2) unstable; urgency=medium
+protonvpn-cli (3.6.0-3) unstable; urgency=medium
 
-  * Feature: Add vpn accelerator
+  * Update to latest library version (3.2.0 =< and < 3.3.0)
   
  -- Proton Technologies AG <opensource@proton.me>  Fri, 21 May 2021 13:00:00 +0100
 
