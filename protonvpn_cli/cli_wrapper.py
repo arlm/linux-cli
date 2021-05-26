@@ -322,9 +322,11 @@ class CLIWrapper:
         if not self.protonvpn.check_session_exists():
             print("\nPlease login to to be able to set NetShield.")
             return
-        if not self.protonvpn.get_session().clientconfig.features.netshield:
-            print("\nThis feature is currently not supported.")
-            return
+
+        # To-do: Once infra is updated, implement this check
+        # if not self.protonvpn.get_session().clientconfig.features.netshield:
+        #     print("\nThis feature is currently not supported.")
+        #     return
 
         session = self.protonvpn.get_session()
         if not args.off and session.vpn_tier == ServerTierEnum.FREE.value:
@@ -459,7 +461,7 @@ class CLIWrapper:
         if not self.protonvpn.check_session_exists():
             print("\nPlease login to be able to set VPN Accelerator.")
             return
-        if not self.client_config.features.vpn_accelerator:
+        if not self.protonvpn.get_session().clientconfig.features.vpn_accelerator:
             print("\nThis feature is currently not supported.")
             return
 
@@ -496,13 +498,11 @@ class CLIWrapper:
             Kill Switch: \t  {killswitch}
             Netshield: \t  {netshield}
             DNS: \t\t  {dns}
-            VPN Accelerator:  {vpn_accel}
         """).format(
             protocol=user_settings_dict[DisplayUserSettingsEnum.PROTOCOL],
             killswitch=user_settings_dict[DisplayUserSettingsEnum.KILLSWITCH],
-            dns=user_settings_dict[DisplayUserSettingsEnum.DNS],
             netshield=user_settings_dict[DisplayUserSettingsEnum.NETSHIELD],
-            vpn_accel=user_settings_dict[DisplayUserSettingsEnum.VPN_ACCELERATOR],
+            dns=user_settings_dict[DisplayUserSettingsEnum.DNS],
         )
         print(status_to_print)
 
@@ -520,7 +520,6 @@ class CLIWrapper:
         raw_dns = raw_format[DisplayUserSettingsEnum.DNS]
         raw_custom_dns = raw_format[DisplayUserSettingsEnum.CUSTOM_DNS]
         raw_ns = raw_format[DisplayUserSettingsEnum.NETSHIELD]
-        raw_vpn_accel = raw_format[DisplayUserSettingsEnum.VPN_ACCELERATOR]
 
         # protocol
         if raw_protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]: # noqa
@@ -551,14 +550,12 @@ class CLIWrapper:
         transformed_ns = netshield_status[raw_ns]
 
         # vpn accelerator
-        transformed_vpn_accel = "On" if raw_vpn_accel == UserSettingStatusEnum.ENABLED else "Off"
 
         return {
             DisplayUserSettingsEnum.PROTOCOL: transformed_protocol,
             DisplayUserSettingsEnum.KILLSWITCH: transformed_ks,
             DisplayUserSettingsEnum.DNS: transformed_dns,
             DisplayUserSettingsEnum.NETSHIELD: transformed_ns,
-            DisplayUserSettingsEnum.VPN_ACCELERATOR: transformed_vpn_accel,
         }
 
     def restore_default_configurations(self, _):
