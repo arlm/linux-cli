@@ -1,4 +1,4 @@
-protonvpn-cli (3.6.0-3) unstable; urgency=medium
+protonvpn-cli (3.6.0-4) unstable; urgency=medium
 
   * Update to latest library version (3.2.0 =< and < 3.3.0)
   

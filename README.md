@@ -1,11 +1,28 @@
-# ProtonVPNCLI 
+# ProtonVPN Linux CLI
 
-Official ProtonVPN CLI for Linux based systems.
+Copyright (c) 2021 Proton Technologies AG
+
+This repository holds the ProtonVPN Linux CLI.
+For licensing information see [COPYING](COPYING.md).
+For contribution policy see [CONTRIBUTING](CONTRIBUTING.md).
+
+## Description
+The [ProtonVPN](https://protonvpn.com) Linux CLI is intended for every ProtonVPN service user.
+
+You can download the latest stable release, either from our official repositories or directly on the [official GitHub repository](https://github.com/ProtonVPN/linux-cli/releases/latest).
 
 ### Dependencies:
+| **Distro**                              | **Command**                                                                                                     |
+|:----------------------------------------|:----------------------------------------------------------------------------------------------------------------|
+|Fedora/CentOS/RHEL                       | `python3-dialog` |
+|Ubuntu/Linux Mint/Debian and derivatives | `python3-dialog` |
+|Arch Linux/Manjaro                       | `python-pythondialog` |
 
-python3-protonvpn-nm-lib, python3-dialog
+### Additional dependency:
+[ProtonVPN NM Library](https://github.com/ProtonVPN/protonvpn-nm-lib)
 
+## Installation
+Follow our [knowledge base article](to-add) on how to install the CLI on your system.
 
 ## How to use
 
@@ -22,7 +39,7 @@ python3-protonvpn-nm-lib, python3-dialog
 |`protonvpn-cli c --sc`                 | Connect to fastest Secure Core server.                |
 |`protonvpn-cli disconnect, d`          | Disconnect from VPN session.                          |
 |`protonvpn-cli s, status`              | Display VPN session status.                           |
-|`protonvpn-cli config`                 | Change user settings menu.                            |
+|`protonvpn-cli config`                 | Change user settings.                                 |
 |`protonvpn-cli ks, killswitch`         | Change kill switch settings.                          |
 |`protonvpn-cli --version`              | Display version.                                      |
 |`protonvpn-cli --help`                 | Show help message.                                    |
