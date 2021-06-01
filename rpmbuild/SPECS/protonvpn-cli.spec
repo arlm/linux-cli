@@ -72,7 +72,7 @@ rm -rf $RPM_BUILD_ROOT
 - Add confirmation upon logout if VPN is active
 - Replace always-on for permanent
 
-* Mon Feb 22 2021 Proton Technologies AG <opensource@proton.me> 3.4.0-3
+* Fri Feb 26 2021 Proton Technologies AG <opensource@proton.me> 3.4.0-3
 - Add support for protonvpn-nm-lib 0.5.0
 - Replace os.system for custom subprocess wrapper
 
