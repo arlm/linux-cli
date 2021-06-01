@@ -48,7 +48,7 @@ protonvpn-cli (3.4.0-3) unstable; urgency=low
   * Add support for protonvpn-nm-lib 0.5.0
   * Replace os.system for custom subprocess wrapper
 
- -- Proton Technologies AG <opensource@proton.me>  Mon, 22 Feb 2021 16:00:00 +0000
+ -- Proton Technologies AG <opensource@proton.me>  Fri, 26 Feb 2021 16:00:00 +0000
 
 protonvpn-cli (3.3.1-1) unstable; urgency=low
 
