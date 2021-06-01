@@ -1,4 +1,4 @@
-FROM IMAGE_URL_RPM
+FROM IMAGE_URL_FED32
 ARG git_repo_lib
 ENV git_repo_lib=${git_repo_lib:-GIT_REPO_LIB}
 ARG git_repo_client
