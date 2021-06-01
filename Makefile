@@ -13,26 +13,50 @@ ifeq ($(branch), latest)
 endif
 
 IMAGE_URL_DEB = ubuntu:latest
-IMAGE_URL_RPM = fedora:latest
+IMAGE_URL_FED31 = fedora:31
+IMAGE_URL_FED32 = fedora:32
+IMAGE_URL_FED33 = fedora:33
+IMAGE_URL_FED34 = fedora:34
+IMAGE_URL_CENTOS8 = centos:8
 IMAGE_URL_ARCH = archlinux:base-devel-20210131.0.14634
 
 # Run make base to build both images based on ubuntu and fedora
-base: image-deb image-rpm image-arch
+base: image-deb image-fed31 image-fed32 image-fed33 image-fed34 image-centos8 image-arch
 
 # Create the image based on ubuntu
 image-deb: image
 image-deb: DOCKER_FILE_SOURCE = Dockerfile.deb
 image-deb: src = ubuntu
 
-# Create the image based on fedora
-image-rpm: image
-image-rpm: DOCKER_FILE_SOURCE = Dockerfile.rpm
-image-rpm: src = fedora
-
 # Create the image based on archlinux
 image-arch: image
 image-arch: DOCKER_FILE_SOURCE = Dockerfile.arch
 image-arch: src = archlinux
+
+# Create the image based on fedora 34
+image-centos8: image
+image-centos8: DOCKER_FILE_SOURCE = Dockerfile.centos8
+image-centos8: src = centos8
+
+# Create the image based on fedora 31
+image-fed31: image
+image-fed31: DOCKER_FILE_SOURCE = Dockerfile.fed31
+image-fed31: src = fedora31
+
+# Create the image based on fedora 32
+image-fed32: image
+image-fed32: DOCKER_FILE_SOURCE = Dockerfile.fed32
+image-fed32: src = fedora32
+
+# Create the image based on fedora 33
+image-fed33: image
+image-fed33: DOCKER_FILE_SOURCE = Dockerfile.fed33
+image-fed33: src = fedora33
+
+# Create the image based on fedora 34
+image-fed34: image
+image-fed34: DOCKER_FILE_SOURCE = Dockerfile.fed34
+image-fed34: src = fedora34
 
 ## Make remote image form a branch make image branch=<branchName> (master default)
 image: requirements.txt docker-source
@@ -47,7 +71,7 @@ image: requirements.txt docker-source
 
 ## We host our own copy of the image ubuntu:latest
 docker-source:
-	sed "s|IMAGE_URL_RPM|$(IMAGE_URL_RPM)|; s|IMAGE_URL_DEB|$(IMAGE_URL_DEB)|; s|IMAGE_URL_ARCH|$(IMAGE_URL_ARCH)|" $(DOCKER_FILE_SOURCE) > /tmp/Dockerfile.image
+	sed "s|IMAGE_URL_CENTOS8|$(IMAGE_URL_CENTOS8)|; s|IMAGE_URL_FED31|$(IMAGE_URL_FED31)|; s|IMAGE_URL_FED32|$(IMAGE_URL_FED32)|; s|IMAGE_URL_FED33|$(IMAGE_URL_FED33)|; s|IMAGE_URL_FED34|$(IMAGE_URL_FED34)|; s|IMAGE_URL_DEB|$(IMAGE_URL_DEB)|; s|IMAGE_URL_ARCH|$(IMAGE_URL_ARCH)|" $(DOCKER_FILE_SOURCE) > /tmp/Dockerfile.image
 
 requirements.txt:
 	@ touch requirements.txt
@@ -69,13 +93,25 @@ local: docker-source
 	@ rm -rf __SOURCE_APP || true
 local: NAME_IMAGE = linux-cli:latest
 
-local-base: local-deb local-rpm local-arch
+local-base: local-deb local-fed31 local-fed32 local-fed33 local-fed34 local-centos8 local-arch
 
 local-deb: local
 local-deb: DOCKER_FILE_SOURCE = Dockerfile.deb
 
-local-rpm: local
-local-rpm: DOCKER_FILE_SOURCE = Dockerfile.rpm
+local-fed31: local
+local-fed31: DOCKER_FILE_SOURCE = Dockerfile.fed31
+
+local-fed32: local
+local-fed32: DOCKER_FILE_SOURCE = Dockerfile.fed32
+
+local-fed33: local
+local-fed33: DOCKER_FILE_SOURCE = Dockerfile.fed33
+
+local-fed34: local
+local-fed34: DOCKER_FILE_SOURCE = Dockerfile.fed34
+
+local-centos8: local
+local-centos8: DOCKER_FILE_SOURCE = Dockerfile.centos8
 
 local-arch: local
 local-arch: DOCKER_FILE_SOURCE = Dockerfile.arch
@@ -100,15 +136,55 @@ test-deb: local-deb
 			linux-cli:latest \
 			python3 -m pytest
 
-## Run tests against the latest version of the rpm from your code
-test-rpm: local-rpm
+## Run tests against the latest version of the image from your code
+test-fed31: local-fed31
 	# Keep -it because with colors it's better
 	@ docker run \
 			--rm \
 			-it \
 			--privileged \
-			--volume $(PWD)/home/user/linux-cli/ \
-			linux-cli:latest \
+			--volume $(PWD)/.env:/home/user/proton-python-client.env \
+			proton-python-client:latest \
+			python3 -m pytest
+			
+test-fed32: local-fed32
+	# Keep -it because with colors it's better
+	@ docker run \
+			--rm \
+			-it \
+			--privileged \
+			--volume $(PWD)/.env:/home/user/proton-python-client.env \
+			proton-python-client:latest \
+			python3 -m pytest
+
+test-fed33: local-fed33
+	# Keep -it because with colors it's better
+	@ docker run \
+			--rm \
+			-it \
+			--privileged \
+			--volume $(PWD)/.env:/home/user/proton-python-client.env \
+			proton-python-client:latest \
+			python3 -m pytest
+			
+test-fed34: local-fed34
+	# Keep -it because with colors it's better
+	@ docker run \
+			--rm \
+			-it \
+			--privileged \
+			--volume $(PWD)/.env:/home/user/proton-python-client.env \
+			proton-python-client:latest \
+			python3 -m pytest
+
+test-centos8: local-centos8
+	# Keep -it because with colors it's better
+	@ docker run \
+			--rm \
+			-it \
+			--privileged \
+			--volume $(PWD)/.env:/home/user/proton-python-client.env \
+			proton-python-client:latest \
 			python3 -m pytest
 
 ## Run tests against the latest version of the arch from your code
