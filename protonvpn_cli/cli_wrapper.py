@@ -581,6 +581,26 @@ class CLIWrapper:
 
         print("\nConfigurations were successfully reset to default values.")
 
+    def get_logs(self):
+        bug_report = self.protonvpn.get_bug_report()
+        print("\nGenerating logs...")
+        try:
+            bug_report.generate_logs()
+        except Exception as e:
+            logger.exception(e)
+            print("\nUnable to generate logs:", format(e))
+            return
+
+        print("Opening file explorer...")
+        try:
+            bug_report.open_folder_with_logs()
+        except Exception as e:
+            logger.exception(e)
+            print(
+                "\nUnable to open file explorer with logs."
+                "You can find logs at ~/.cache/protonvpn/logs"
+            )
+
     def status(self):
         """Proxymethod to diplay connection status."""
         if not self.protonvpn.get_active_protonvpn_connection():
