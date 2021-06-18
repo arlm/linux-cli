@@ -205,6 +205,13 @@ class CLIWrapper:
             )
             print(killswitch_msg)
             return
+        except exceptions.IllegalServername as e:
+            logger.exception(e)
+            print(
+                "\nProvided servername is invalid. Please ensure that you've "
+                "correctly typed the servername."
+            )
+            return
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print(
