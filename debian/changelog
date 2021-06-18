@@ -1,3 +1,9 @@
+protonvpn-cli (3.7.0-1) unstable; urgency=medium
+
+  * Feature: Generate and provide easy access to logs
+  
+ -- Proton Technologies AG <opensource@proton.me>  Fri, 18 June 2021 14:45:00 +0100
+
 protonvpn-cli (3.6.0-5) unstable; urgency=medium
 
   * Update to latest library version (3.2.0 =< and < 3.3.0)

@@ -14,28 +14,6 @@ from .logger import logger
 
 class ProtonVPNCLI:
     def __init__(self):
-        parser = argparse.ArgumentParser(add_help=False)
-        parser.add_argument("command", nargs="?")
-        parser.add_argument(
-            "-v", "--version", required=False, action="store_true"
-        )
-        parser.add_argument(
-            "-h", "--help", required=False, action="store_true"
-        )
-        args = parser.parse_args(sys.argv[1:2])
-
-        if args.version:
-            print(
-                "\nProtonVPN CLI v{} "
-                "(protonvpn-nm-lib v{}; proton-client v{})".format(
-                    APP_VERSION, lib_version, proton_version
-                )
-            )
-            parser.exit(1)
-        elif not args.command or not hasattr(self, args.command) or args.help:
-            print(MAIN_CLI_HELP)
-            parser.exit(1)
-
         logger.info(
             "\n"
             + "---------------------"
@@ -54,9 +32,37 @@ class ProtonVPNCLI:
                 APP_VERSION, lib_version, proton_version
             )
         )
-        logger.info("CLI command: {}".format(args))
+
         self.cli_wrapper = CLIWrapper()
-        getattr(self, args.command)()
+        parser = argparse.ArgumentParser(add_help=False)
+        parser.add_argument("command", nargs="?")
+        parser.add_argument(
+            "-v", "--version", required=False, action="store_true"
+        )
+        parser.add_argument(
+            "-h", "--help", required=False, action="store_true"
+        )
+        parser.add_argument(
+            "--get-logs", required=False, action="store_true"
+        )
+        args = parser.parse_args(sys.argv[1:2])
+
+        if args.version:
+            print(
+                "\nProtonVPN CLI v{} "
+                "(protonvpn-nm-lib v{}; proton-client v{})".format(
+                    APP_VERSION, lib_version, proton_version
+                )
+            )
+        elif args.get_logs:
+            self.cli_wrapper.get_logs()
+        elif not args.command or not hasattr(self, args.command) or args.help:
+            print(MAIN_CLI_HELP)
+        else:
+            logger.info("CLI command: {}".format(args))
+            getattr(self, args.command)()
+
+        parser.exit(1)
 
     def c(self):
         """Shortcut to connect to ProtonVPN."""

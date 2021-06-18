@@ -205,6 +205,13 @@ class CLIWrapper:
             )
             print(killswitch_msg)
             return
+        except exceptions.IllegalServername as e:
+            logger.exception(e)
+            print(
+                "\nProvided servername is invalid. Please ensure that you've "
+                "correctly typed the servername."
+            )
+            return
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print(
@@ -580,6 +587,26 @@ class CLIWrapper:
             return
 
         print("\nConfigurations were successfully reset to default values.")
+
+    def get_logs(self):
+        bug_report = self.protonvpn.get_bug_report()
+        print("\nGenerating logs...")
+        try:
+            bug_report.generate_logs()
+        except Exception as e:
+            logger.exception(e)
+            print("\nUnable to generate logs:", format(e))
+            return
+
+        print("Opening file explorer...")
+        try:
+            bug_report.open_folder_with_logs()
+        except Exception as e:
+            logger.exception(e)
+            print(
+                "\nUnable to open file explorer with logs."
+                "You can find logs at ~/.cache/protonvpn/logs"
+            )
 
     def status(self):
         """Proxymethod to diplay connection status."""
