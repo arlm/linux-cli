@@ -644,10 +644,10 @@ class CLIWrapper:
         else:
             features = "None"
         features = "Server Features: " + features
-        entry_country = self.protonvpn.country.get_country_name(
+        entry_country = self.protonvpn.get_country().get_country_name(
             server.entry_country
         )
-        exit_country = self.protonvpn.country.get_country_name(
+        exit_country = self.protonvpn.get_country().get_country_name(
             server.exit_country
         )
 
