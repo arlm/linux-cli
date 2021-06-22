@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.7.0
-%define release 1
+%define release 3
 
 Prefix: %{_prefix}
 
@@ -46,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Fri Jun 18 2021 Proton Technologies AG <opensource@proton.me> 3.7.0-1
+* Fri Jun 18 2021 Proton Technologies AG <opensource@proton.me> 3.7.0-3
 - Feature: Generate and provide easy access to logs
 
 * Fri May 21 2021 Proton Technologies AG <opensource@proton.me> 3.6.0-5

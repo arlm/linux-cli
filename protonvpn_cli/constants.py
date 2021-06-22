@@ -23,6 +23,7 @@ commands:
 optional arguments:
     -h, --help          Display help message.
     -v, --version       Display versions.
+    --get-logs          Get ProtonVPN logs.
 
 examples:
     protonvpn-cli login
@@ -37,6 +38,7 @@ examples:
     protonvpn-cli config --help
     protonvpn-cli (-h | --help)
     protonvpn-cli (-v | --version)
+    protonvpn-cli --get-logs
 """.format(APP_VERSION)
 
 LOGIN_HELP = """
