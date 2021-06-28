@@ -22,7 +22,7 @@ You can download the latest stable release, either from our official repositorie
 [ProtonVPN NM Library](https://github.com/ProtonVPN/protonvpn-nm-lib)
 
 ## Installation
-Follow our [knowledge base article](to-add) on how to install the CLI on your system.
+Follow our [knowledge base article](https://protonvpn.com/support/linux-vpn-tool/) on how to install the CLI on your system.
 
 ## How to use
 
