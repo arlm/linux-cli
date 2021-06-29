@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.7.2
-%define release 1
+%define release 2
 
 Prefix: %{_prefix}
 
@@ -46,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Mon Jun 28 2021 Proton Technologies AG <opensource@proton.me> 3.7.2-1
+* Mon Jun 28 2021 Proton Technologies AG <opensource@proton.me> 3.7.2-2
 - Fix: Update README.md and create USAGE.md
 
 * Tue Jun 22 2021 Proton Technologies AG <opensource@proton.me> 3.7.1-1
