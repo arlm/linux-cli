@@ -62,7 +62,7 @@ class ProtonVPNCLI:
             logger.info("CLI command: {}".format(args))
             getattr(self, args.command)()
 
-        parser.exit(1)
+        parser.exit()
 
     def c(self):
         """Shortcut to connect to ProtonVPN."""
@@ -126,7 +126,7 @@ class ProtonVPNCLI:
         logger.info("Options: {}".format(args))
         if args.help:
             print(CONNECT_HELP)
-            parser.exit(1)
+            return
         self.cli_wrapper.connect(args)
 
     def d(self):
@@ -154,7 +154,7 @@ class ProtonVPNCLI:
         args = parser.parse_args(sys.argv[2:])
         if args.help or args.username is None:
             print(LOGIN_HELP)
-            parser.exit(1)
+            return
 
         self.cli_wrapper.login(args.username)
 
@@ -208,7 +208,7 @@ class ProtonVPNCLI:
             and not args.permanent
         ):
             print(KS_HELP)
-            parser.exit()
+            return
 
         logger.info("Kill Switch command: {}".format(args))
         self.cli_wrapper.set_killswitch(args)
@@ -259,7 +259,7 @@ class ProtonVPNCLI:
             and not args.off
         ):
             print(NETSHIELD_HELP)
-            parser.exit()
+            return
 
         logger.info("NetShield command: {}".format(args))
         self.cli_wrapper.set_netshield(args)
@@ -283,10 +283,10 @@ class ProtonVPNCLI:
 
             if not args.ip:
                 print(CONFIG_HELP)
-                parser.exit()
+                return
 
             self.cli_wrapper.configurations_menu(args)
-            parser.exit()
+            return
 
         parser = argparse.ArgumentParser(
             description="Connect to ProtonVPN", prog="protonvpn-cli config",
@@ -340,7 +340,7 @@ class ProtonVPNCLI:
             )
         ):
             print(CONFIG_HELP)
-            parser.exit()
+            return
         elif (
             (
                 not args.protocol
@@ -355,4 +355,3 @@ class ProtonVPNCLI:
             custom_dns()
 
         self.cli_wrapper.configurations_menu(args2)
-        parser.exit()
