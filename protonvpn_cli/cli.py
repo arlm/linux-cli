@@ -328,6 +328,15 @@ class ProtonVPNCLI:
             ]
         )
         group.add_argument(
+            "--alt-routing",
+            help="Alternative routing.",
+            nargs=1,
+            choices=[
+                "enable",
+                "disable",
+            ]
+        )
+        group.add_argument(
             "-d", "--default",
             help="Reset do default configurations.",
             action="store_true"
@@ -351,6 +360,7 @@ class ProtonVPNCLI:
                 and not args.default
                 and not args.list
                 and not args.vpn_accelerator
+                and not args.alt_routing
             )
         ):
             print(CONFIG_HELP)
@@ -358,12 +368,14 @@ class ProtonVPNCLI:
         elif (
             (
                 not args.protocol
+                and not args.alt_routing
                 and not args.default
                 and not args.vpn_accelerator
                 and not args.help
             ) or (
                 not args.protocol
                 and not args.vpn_accelerator
+                and not args.alt_routing
                 and not args.default
                 and args.help
             )

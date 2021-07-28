@@ -73,6 +73,7 @@ class CLIWrapper:
             logger.exception(e)
             print(
                 "\nYour connection is not secure. "
+                "Try changing networks and/or enable alternative routing."
             )
             return 1
         except (exceptions.ProtonVPNException, Exception) as e:
@@ -81,6 +82,29 @@ class CLIWrapper:
             return 1
 
         print("\nSuccessful login.")
+        return 0
+
+    def set_alternative_routing(self, status):
+        _status = {
+            "enable": UserSettingStatusEnum.ENABLED,
+            "disable": UserSettingStatusEnum.DISABLED
+        }
+
+        try:
+            self.user_settings.alternative_routing = _status[status]
+        except KeyError as e:
+            logger.exception(e)
+            print("\nInvalid option was provided")
+            return 1
+        except Exception as e:
+            logger.exception(e)
+            print(
+                "\nUnable to set alternative routing. "
+                "If the issue persists, please contact support."
+            )
+            return 1
+
+        print("\nAlternative Routing has been {}d. ".format(status))
         return 0
 
     def logout(self):
@@ -237,6 +261,7 @@ class CLIWrapper:
             logger.exception(e)
             print(
                 "\nYour connection is not secure. "
+                "Try changing networks and/or enable alternative routing."
             )
             return 1
         except (exceptions.ProtonVPNException, Exception) as e:
@@ -419,6 +444,7 @@ class CLIWrapper:
             ip=self.set_custom_dns,
             list=self.list_configurations,
             vpn_accelerator=self.set_vpn_accelerator,
+            alt_routing=self.set_alternative_routing,
             default=self.restore_default_configurations,
         )
 
@@ -545,8 +571,10 @@ class CLIWrapper:
             Kill Switch:\t\t{killswitch}
             Netshield:\t\t{netshield}
             DNS:\t\t\t{dns}
+            Alternative Routing:\t{alt_routing}
         """).format(
             protocol=user_settings_dict[DisplayUserSettingsEnum.PROTOCOL],
+            alt_routing=user_settings_dict[DisplayUserSettingsEnum.ALT_ROUTING],
             killswitch=user_settings_dict[DisplayUserSettingsEnum.KILLSWITCH],
             netshield=user_settings_dict[DisplayUserSettingsEnum.NETSHIELD],
             dns=user_settings_dict[DisplayUserSettingsEnum.DNS],
@@ -568,6 +596,7 @@ class CLIWrapper:
         raw_dns = raw_format[DisplayUserSettingsEnum.DNS]
         raw_custom_dns = raw_format[DisplayUserSettingsEnum.CUSTOM_DNS]
         raw_ns = raw_format[DisplayUserSettingsEnum.NETSHIELD]
+        raw_alt_routing = raw_format[DisplayUserSettingsEnum.ALT_ROUTING]
 
         # protocol
         if raw_protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]: # noqa
@@ -599,11 +628,15 @@ class CLIWrapper:
 
         # vpn accelerator
 
+        # alternative_routing
+        transformed_alt_routing = "Enabled" if raw_alt_routing == UserSettingStatusEnum.ENABLED else "Disabled" # noqa
+
         return {
             DisplayUserSettingsEnum.PROTOCOL: transformed_protocol,
             DisplayUserSettingsEnum.KILLSWITCH: transformed_ks,
             DisplayUserSettingsEnum.DNS: transformed_dns,
             DisplayUserSettingsEnum.NETSHIELD: transformed_ns,
+            DisplayUserSettingsEnum.ALT_ROUTING: transformed_alt_routing,
         }
 
     def restore_default_configurations(self, _):

@@ -1,5 +1,6 @@
 protonvpn-cli (3.8.0-2) unstable; urgency=medium
 
+  * Feature: Add alternative routing option
   * Fix: When adding custom DNS IP it will no longer automatically set "automatic DNS" 
   * Fix: Add VPN Accelerator setting 
   
