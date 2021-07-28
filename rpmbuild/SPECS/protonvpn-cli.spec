@@ -49,6 +49,7 @@ rm -rf $RPM_BUILD_ROOT
 * Fri Jun 16 2021 Proton Technologies AG <opensource@proton.me> 3.8.0-2
 - Fix: When adding custom DNS IP it will no longer automatically set "automatic DNS"
 - Fix: Add VPN Accelerator setting 
+- Feature: Add alternative routing option
 
 * Mon Jun 28 2021 Proton Technologies AG <opensource@proton.me> 3.7.2-2
 - Fix: Update README.md and create USAGE.md
