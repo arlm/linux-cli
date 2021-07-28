@@ -1,6 +1,7 @@
 protonvpn-cli (3.8.0-1) unstable; urgency=medium
 
   * Fix: When adding custom DNS IP it will no longer automatically set "automatic DNS" 
+  * Fix: Add VPN Accelerator setting 
   
  -- Proton Technologies AG <opensource@proton.me>  Fri, 16 Jun 2021 15:15:00 +0100
  

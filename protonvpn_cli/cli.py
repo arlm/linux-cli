@@ -307,6 +307,17 @@ class ProtonVPNCLI:
             ]
         )
         group.add_argument(
+            "--vpn-accelerator",
+            help="VPN Accelerator enables a set of unique performance "
+            "enhancing technologies which can increase VPN speeds "
+            "by up to 400%",
+            nargs=1,
+            choices=[
+                "on",
+                "off",
+            ]
+        )
+        group.add_argument(
             "-p", "--protocol",
             help="Protocol settings.",
             nargs=1,
@@ -338,6 +349,7 @@ class ProtonVPNCLI:
                 and not args.help
                 and not args.default
                 and not args.list
+                and not args.vpn_accelerator
             )
         ):
             print(CONFIG_HELP)
@@ -346,9 +358,11 @@ class ProtonVPNCLI:
             (
                 not args.protocol
                 and not args.default
+                and not args.vpn_accelerator
                 and not args.help
             ) or (
                 not args.protocol
+                and not args.vpn_accelerator
                 and not args.default
                 and args.help
             )

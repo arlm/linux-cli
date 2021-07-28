@@ -19,7 +19,7 @@ BuildRoot: %{_tmppath}/%{unmangled_name}-%{version}-%{release}-buildroot
 
 BuildRequires: python3-devel
 BuildRequires: python3-setuptools
-Requires: python3-protonvpn-nm-lib >= 3.3.0, python3-protonvpn-nm-lib < 3.4.0
+Requires: python3-protonvpn-nm-lib >= 3.3.0
 Requires: python3-dialog
 
 %{?python_disable_dependency_generator}
@@ -47,7 +47,8 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * Fri Jun 16 2021 Proton Technologies AG <opensource@proton.me> 3.8.0-1
-- Fix: When adding custom DNS IP it will no longer automatically set "automatic DNS" 
+- Fix: When adding custom DNS IP it will no longer automatically set "automatic DNS"
+- Fix: Add VPN Accelerator setting 
 
 * Mon Jun 28 2021 Proton Technologies AG <opensource@proton.me> 3.7.2-2
 - Fix: Update README.md and create USAGE.md
