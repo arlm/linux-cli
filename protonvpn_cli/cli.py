@@ -55,18 +55,19 @@ class ProtonVPNCLI:
                 )
             )
         elif args.get_logs:
-            self.cli_wrapper.get_logs()
+            res = self.cli_wrapper.get_logs()
         elif not args.command or not hasattr(self, args.command) or args.help:
             print(MAIN_CLI_HELP)
+            res = 0
         else:
             logger.info("CLI command: {}".format(args))
-            getattr(self, args.command)()
+            res = getattr(self, args.command)()
 
-        parser.exit()
+        parser.exit(res)
 
     def c(self):
         """Shortcut to connect to ProtonVPN."""
-        self.connect()
+        return self.connect()
 
     def connect(self):
         """Connect to ProtonVPN."""
@@ -126,16 +127,17 @@ class ProtonVPNCLI:
         logger.info("Options: {}".format(args))
         if args.help:
             print(CONNECT_HELP)
-            return
-        self.cli_wrapper.connect(args)
+            return 0
+
+        return self.cli_wrapper.connect(args)
 
     def d(self):
         """Shortcut to disconnect from ProtonVPN."""
-        self.disconnect()
+        return self.disconnect()
 
     def disconnect(self):
         """Disconnect from ProtonVPN."""
-        self.cli_wrapper.disconnect()
+        return self.cli_wrapper.disconnect()
 
     def login(self):
         """Login ProtonVPN."""
@@ -154,25 +156,25 @@ class ProtonVPNCLI:
         args = parser.parse_args(sys.argv[2:])
         if args.help or args.username is None:
             print(LOGIN_HELP)
-            return
+            return 0
 
-        self.cli_wrapper.login(args.username)
+        return self.cli_wrapper.login(args.username)
 
     def logout(self):
         """Logout ProtonVPN."""
-        self.cli_wrapper.logout()
+        return self.cli_wrapper.logout()
 
     def s(self):
         """Shortcut to display connection status"""
-        self.status()
+        return self.status()
 
     def status(self):
         """Display connection status."""
-        self.cli_wrapper.status()
+        return self.cli_wrapper.status()
 
     def ks(self):
         """Shortcut to manage killswitch settings."""
-        self.killswitch()
+        return self.killswitch()
 
     def killswitch(self):
         """Manage killswitch settings."""
@@ -208,22 +210,22 @@ class ProtonVPNCLI:
             and not args.permanent
         ):
             print(KS_HELP)
-            return
+            return 0
 
         logger.info("Kill Switch command: {}".format(args))
-        self.cli_wrapper.set_killswitch(args)
+        return self.cli_wrapper.set_killswitch(args)
 
     def r(self):
         """Shortcut to reconnect."""
-        self.reconnect()
+        return self.reconnect()
 
     def reconnect(self):
         """Reconnect to previously connected server."""
-        self.cli_wrapper.reconnect()
+        return self.cli_wrapper.reconnect()
 
     def ns(self):
         """Shortcut to manage NetShield settings."""
-        self.netshield()
+        return self.netshield()
 
     def netshield(self):
         """Manage NetShield settings."""
@@ -259,16 +261,16 @@ class ProtonVPNCLI:
             and not args.off
         ):
             print(NETSHIELD_HELP)
-            return
+            return 0
 
         logger.info("NetShield command: {}".format(args))
-        self.cli_wrapper.set_netshield(args)
+        return self.cli_wrapper.set_netshield(args)
 
     def config(self):
         """Manage user settings."""
         def custom_dns():
             parser = argparse.ArgumentParser(
-                description="Connect to ProtonVPN",
+                description="Set ProtonVPN DNS setting",
                 prog="protonvpn-cli config --dns custom",
                 add_help=False
             )
@@ -283,10 +285,9 @@ class ProtonVPNCLI:
 
             if not args.ip:
                 print(CONFIG_HELP)
-                return
+                return 0
 
-            self.cli_wrapper.configurations_menu(args)
-            return
+            return self.cli_wrapper.configurations_menu(args)
 
         parser = argparse.ArgumentParser(
             description="Connect to ProtonVPN", prog="protonvpn-cli config",
@@ -340,7 +341,7 @@ class ProtonVPNCLI:
             )
         ):
             print(CONFIG_HELP)
-            return
+            return 0
         elif (
             (
                 not args.protocol
@@ -352,6 +353,6 @@ class ProtonVPNCLI:
                 and args.help
             )
         ) and args.dns and args.dns.pop() == "custom":
-            custom_dns()
+            return custom_dns()
 
-        self.cli_wrapper.configurations_menu(args2)
+        return self.cli_wrapper.configurations_menu(args2)

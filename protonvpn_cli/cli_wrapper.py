@@ -62,25 +62,32 @@ class CLIWrapper:
         """Proxymethod to login user with ProtonVPN credentials."""
         if self.protonvpn.check_session_exists():
             print("\nYou are already logged in.")
-            return
+            return 1
 
         password = getpass.getpass("Enter your ProtonVPN password: ")
         logger.info("Credentials provided, attempting to login")
 
         try:
             self.protonvpn.login(username, password)
+        except exceptions.InsecureConnection as e:
+            logger.exception(e)
+            print(
+                "\nYour connection is not secure. "
+            )
+            return 1
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print("\n{}".format(e))
-            return
+            return 1
 
         print("\nSuccessful login.")
+        return 0
 
     def logout(self):
         """Proxymethod to logout user."""
         if not self.protonvpn.check_session_exists():
             print("\nNo ProtonVPN session was found, please login first.")
-            return
+            return 1
 
         if self.protonvpn.get_active_protonvpn_connection():
             user_choice = input(
@@ -89,7 +96,7 @@ class CLIWrapper:
             ).lower().strip()
 
             if not user_choice == "y":
-                return
+                return 0
 
         print("Attempting to logout.")
         try:
@@ -97,22 +104,24 @@ class CLIWrapper:
         except exceptions.KeyringDataNotFound as e:
             logger.exception(e)
             print("\n{}".format(e))
-            return
+            return 1
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print("\n{}".format(e))
-            return
+            return 1
 
         print(
             "\nSession was ended and "
             "you were successfully logged out."
         )
 
+        return 0
+
     def connect(self, args):
         """Proxymethod to connect to ProtonVPN."""
         if not self.protonvpn.check_session_exists():
             print("\nNo session was found. Please login first.")
-            return
+            return 1
 
         connect_type = False
         connect_type_extra_arg = False
@@ -133,7 +142,8 @@ class CLIWrapper:
             except Exception as e:
                 logger.exception(e)
                 print("\n{}".format(e))
-                return
+                return 1
+
             connect_type = ConnectionTypeEnum.SERVERNAME
             connect_type_extra_arg = servername
             protocol = protocol
@@ -157,7 +167,7 @@ class CLIWrapper:
                 "cache servers."
             )
             print(killswitch_msg)
-            return
+            return 1
         except exceptions.ServernameServerNotFound as e:
             logger.exception(e)
             print(
@@ -166,7 +176,7 @@ class CLIWrapper:
                 "don't have access to it with your plan."
             )
             print(relogin_msg)
-            return
+            return 1
         except exceptions.FeatureServerNotFound as e:
             logger.exception(e)
             print(
@@ -176,7 +186,7 @@ class CLIWrapper:
                 "specified feature with your plan."
             )
             print(relogin_msg)
-            return
+            return 1
         except exceptions.FastestServerInCountryNotFound as e:
             logger.exception(e)
             print(
@@ -186,7 +196,7 @@ class CLIWrapper:
                 "with your plan."
             )
             print(relogin_msg)
-            return
+            return 1
         except (
             exceptions.RandomServerNotFound, exceptions.FastestServerNotFound
         ) as e:
@@ -196,7 +206,7 @@ class CLIWrapper:
                 "Please ensure that you have an active internet connection.\n"
                 "If the issue persists, please contact support."
             )
-            return
+            return 1
         except exceptions.DefaultOVPNPortsNotFoundError as e:
             logger.exception(e)
             print(
@@ -204,14 +214,14 @@ class CLIWrapper:
                 "Please ensure that you have internet connection."
             )
             print(killswitch_msg)
-            return
+            return 1
         except exceptions.IllegalServername as e:
             logger.exception(e)
             print(
                 "\nProvided servername is invalid. Please ensure that you've "
                 "correctly typed the servername."
             )
-            return
+            return 1
         except exceptions.DisableConnectivityCheckError as e:
             logger.exception(e)
             print(
@@ -222,7 +232,13 @@ class CLIWrapper:
                 "/org/freedesktop/NetworkManager org.freedesktop.NetworkManager "
                 "ConnectivityCheckEnabled 'b' 0"
             )
-            return
+            return 1
+        except exceptions.InsecureConnection as e:
+            logger.exception(e)
+            print(
+                "\nYour connection is not secure. "
+            )
+            return 1
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print(
@@ -230,9 +246,9 @@ class CLIWrapper:
                 "internet connectivity."
                 "\nIf the issue persists, please contact support."
             )
-            return
+            return 1
 
-        self._connect()
+        return self._connect()
 
     def disconnect(self):
         """Proxymethod to disconnect from ProtonVPN."""
@@ -245,13 +261,14 @@ class CLIWrapper:
                 "\nNo ProtonVPN connection was found. "
                 "Please connect first to a ProtonVPN server."
             )
-            return
+            return 1
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print("\n{}".format(e))
-            return
+            return 1
 
         print("\nSuccessfully disconnected from ProtonVPN.")
+        return 0
 
     def reconnect(self):
         """Reconnect to previously connected server."""
@@ -265,9 +282,9 @@ class CLIWrapper:
                 "Please make sure that you have access to internet or "
                 "that you've previously connected to another server."
             )
-            return
+            return 1
 
-        self._connect(True)
+        return self._connect(True)
 
     def _connect(self, is_reconnecting=False):
         connection_metadata = self.protonvpn.get_connection_metadata()
@@ -287,7 +304,7 @@ class CLIWrapper:
         except Exception as e:
             logger.exception(e)
             print("\n{}".format(e))
-            return
+            return 1
 
         logger.info("Dbus response: {}".format(connect_response))
 
@@ -295,10 +312,12 @@ class CLIWrapper:
 
         if state == VPNConnectionStateEnum.IS_ACTIVE:
             print("\nSuccessfully connected to ProtonVPN.")
+            return 0
         else:
             print("\nUnable to connect to ProtonVPN: {}".format(
                 connect_response[ConnectionStartStatusEnum.MESSAGE]
             ))
+            return 1
 
     def set_killswitch(self, args):
         """Set kill switch setting.
@@ -326,9 +345,10 @@ class CLIWrapper:
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print(e)
-            return
+            return 1
 
         print("\n{}".format(contextual_conf_msg[kill_switch_option]))
+        return 0
 
     def set_netshield(self, args):
         """Set netshield setting.
@@ -339,7 +359,7 @@ class CLIWrapper:
         logger.info("Setting netshield to: {}".format(args))
         if not self.protonvpn.check_session_exists():
             print("\nPlease login to to be able to set NetShield.")
-            return
+            return 1
 
         # To-do: Once infra is updated, implement this check
         # if not self.protonvpn.get_session().clientconfig.features.netshield:
@@ -354,7 +374,7 @@ class CLIWrapper:
                 "To use NetShield, upgrade your subscription at: "
                 "https://account.protonvpn.com/dashboard"
             )
-            return
+            return 1
 
         restart_vpn_message = ""
         if self.protonvpn.get_active_protonvpn_connection():
@@ -382,12 +402,13 @@ class CLIWrapper:
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print("\n{}".format(e))
-            return
+            return 1
 
         print(
             "\n" + contextual_confirmation_msg[user_choice]
             + restart_vpn_message
         )
+        return 0
 
     def configurations_menu(self, args):
         """Configure user settings."""
@@ -413,7 +434,7 @@ class CLIWrapper:
             except (KeyError, AttributeError):
                 option_value = None
 
-        cli_config_commands[command[0]](option_value)
+        return cli_config_commands[command[0]](option_value)
 
     def set_protocol(self, protocol):
         try:
@@ -421,7 +442,7 @@ class CLIWrapper:
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print(e)
-            return
+            return 1
 
         if protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]:
             protocol = "OpenVPN (" + protocol.value.upper() + ")"
@@ -432,6 +453,7 @@ class CLIWrapper:
                 protocol.upper()
             )
         )
+        return 0
 
     def set_automatic_dns(self, _):
         """Set DNS setting."""
@@ -442,12 +464,13 @@ class CLIWrapper:
         except Exception as e:
             logger.exception(e)
             print(e)
-            return
+            return 1
 
         confirmation_message = "\nDNS automatic configuration enabled.\n" \
             + self.DNS_REMINDER_MESSAGE
 
         print(confirmation_message)
+        return 0
 
     def set_custom_dns(self, dns_ip_list):
         if len(dns_ip_list) > 3:
@@ -456,14 +479,14 @@ class CLIWrapper:
                 "\nYou provided more then 3 DNS servers. "
                 "Please enter up to 3 DNS server IPs."
             )
-            return
+            return 1
 
         try:
             self.user_settings.dns_custom_ips = dns_ip_list
         except Exception as e:
             logger.exception(e)
             print(e)
-            return
+            return 1
 
         self.user_settings.dns = UserSettingStatusEnum.CUSTOM
 
@@ -474,14 +497,15 @@ class CLIWrapper:
                 self.DNS_REMINDER_MESSAGE
             )
         print(confirmation_message)
+        return 0
 
     def set_vpn_accelerator(self, status):
         if not self.protonvpn.check_session_exists():
             print("\nPlease login to be able to set VPN Accelerator.")
-            return
+            return 1
         if not self.protonvpn.get_session().clientconfig.features.vpn_accelerator:
             print("\nThis feature is currently not supported.")
-            return
+            return 1
 
         status = (
             UserSettingStatusEnum.ENABLED
@@ -494,7 +518,7 @@ class CLIWrapper:
         except Exception as e:
             logger.exception(e)
             print(e)
-            return
+            return 1
 
         reconnect_message = "If connected to VPN, please reconnect for " \
             "changes to take effect."
@@ -503,19 +527,24 @@ class CLIWrapper:
             contextual_message = "VPN accelerator has been enabled."
 
         print("\n{} {}".format(contextual_message, reconnect_message))
+        return 0
 
     def list_configurations(self, _):
-        user_settings_dict = self.__transform_user_setting_to_readable_format(
-            self.user_settings.get_user_settings()
-        )
+        try:
+            user_settings_dict = self.__transform_user_setting_to_readable_format(
+                self.user_settings.get_user_settings()
+            )
+        except: # noqa
+            print("\nUnable to display configurations")
+            return 1
 
         status_to_print = dedent("""
             ProtonVPN User Settings
             ---------------------------
-            Default Protocol: {protocol}
-            Kill Switch: \t  {killswitch}
-            Netshield: \t  {netshield}
-            DNS: \t\t  {dns}
+            Default Protocol:\t{protocol}
+            Kill Switch:\t\t{killswitch}
+            Netshield:\t\t{netshield}
+            DNS:\t\t\t{dns}
         """).format(
             protocol=user_settings_dict[DisplayUserSettingsEnum.PROTOCOL],
             killswitch=user_settings_dict[DisplayUserSettingsEnum.KILLSWITCH],
@@ -523,6 +552,7 @@ class CLIWrapper:
             dns=user_settings_dict[DisplayUserSettingsEnum.DNS],
         )
         print(status_to_print)
+        return 0
 
     def __transform_user_setting_to_readable_format(self, raw_format):
         """Transform the dict in raw_format to human readeable format.
@@ -584,7 +614,7 @@ class CLIWrapper:
         ).lower().strip()
 
         if not user_choice == "y":
-            return
+            return 0
 
         logger.info("Restoring default configurations")
 
@@ -595,9 +625,10 @@ class CLIWrapper:
             self.user_settings.reset_to_default_configs()
         except Exception as e:
             print("\n{}".format(e))
-            return
+            return 1
 
         print("\nConfigurations were successfully reset to default values.")
+        return 0
 
     def get_logs(self):
         bug_report = self.protonvpn.get_bug_report()
@@ -607,7 +638,7 @@ class CLIWrapper:
         except Exception as e:
             logger.exception(e)
             print("\nUnable to generate logs:", format(e))
-            return
+            return 1
 
         print("Opening file explorer...")
         try:
@@ -618,12 +649,15 @@ class CLIWrapper:
                 "\nUnable to open file explorer with logs."
                 "You can find logs at ~/.cache/protonvpn/logs"
             )
+            return 1
+
+        return 0
 
     def status(self):
         """Proxymethod to diplay connection status."""
         if not self.protonvpn.get_active_protonvpn_connection():
             print("\nNo active ProtonVPN connection.")
-            return
+            return 0
 
         # cache servers if needed
         try:
@@ -697,6 +731,8 @@ class CLIWrapper:
             time=conn_status_dict[ConnectionStatusEnum.TIME],
         )
         print(status_to_print)
+
+        return 0
 
     def __transform_status_to_readable_format(self, raw_dict):
         """Transform raw dict to human redeable vales:
