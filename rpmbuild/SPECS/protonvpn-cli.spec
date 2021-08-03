@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.8.0
-%define release 1
+%define release 2
 
 Prefix: %{_prefix}
 
@@ -46,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Fri Jun 16 2021 Proton Technologies AG <opensource@proton.me> 3.8.0-1
+* Fri Jun 16 2021 Proton Technologies AG <opensource@proton.me> 3.8.0-2
 - Fix: When adding custom DNS IP it will no longer automatically set "automatic DNS"
 - Fix: Add VPN Accelerator setting 
 
