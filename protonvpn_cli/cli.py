@@ -54,6 +54,7 @@ class ProtonVPNCLI:
                     APP_VERSION, lib_version, proton_version
                 )
             )
+            res = 0
         elif args.get_logs:
             res = self.cli_wrapper.get_logs()
         elif not args.command or not hasattr(self, args.command) or args.help:
