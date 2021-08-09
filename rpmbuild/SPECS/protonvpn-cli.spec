@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
-%define version 3.8.0
-%define release 2
+%define version 3.9.0
+%define release 1
 
 Prefix: %{_prefix}
 
@@ -19,7 +19,7 @@ BuildRoot: %{_tmppath}/%{unmangled_name}-%{version}-%{release}-buildroot
 
 BuildRequires: python3-devel
 BuildRequires: python3-setuptools
-Requires: python3-protonvpn-nm-lib >= 3.3.0
+Requires: python3-protonvpn-nm-lib >= 3.4.0
 Requires: python3-dialog
 
 %{?python_disable_dependency_generator}
@@ -46,9 +46,13 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Fri Jun 16 2021 Proton Technologies AG <opensource@proton.me> 3.9.0-1
+- Feature: Add alternative routing option
+
 * Fri Jun 16 2021 Proton Technologies AG <opensource@proton.me> 3.8.0-2
 - Fix: When adding custom DNS IP it will no longer automatically set "automatic DNS"
 - Fix: Add VPN Accelerator setting 
+- Feature: Add alternative routing option
 
 * Mon Jun 28 2021 Proton Technologies AG <opensource@proton.me> 3.7.2-2
 - Fix: Update README.md and create USAGE.md
