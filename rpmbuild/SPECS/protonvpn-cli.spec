@@ -46,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Fri Jun 16 2021 Proton Technologies AG <opensource@proton.me> 3.9.0-1
+* Mon Aug 09 2021 Proton Technologies AG <opensource@proton.me> 3.9.0-1
 - Feature: Add alternative routing option
 
 * Fri Jun 16 2021 Proton Technologies AG <opensource@proton.me> 3.8.0-2
