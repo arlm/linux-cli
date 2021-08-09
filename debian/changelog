@@ -2,7 +2,7 @@ protonvpn-cli (3.9.0-1) unstable; urgency=medium
 
   * Feature: Add alternative routing option
   
- -- Proton Technologies AG <opensource@proton.me>  Mon, 09 Aig 2021 15:00:00 +0100
+ -- Proton Technologies AG <opensource@proton.me>  Mon, 09 Aug 2021 15:00:00 +0100
  
 protonvpn-cli (3.8.0-2) unstable; urgency=medium
 
