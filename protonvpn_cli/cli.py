@@ -314,8 +314,8 @@ class ProtonVPNCLI:
             "by up to 400%",
             nargs=1,
             choices=[
-                "on",
-                "off",
+                "enable",
+                "disable",
             ]
         )
         group.add_argument(
@@ -368,8 +368,8 @@ class ProtonVPNCLI:
         elif (
             (
                 not args.protocol
-                and not args.alt_routing
                 and not args.default
+                and not args.alt_routing
                 and not args.vpn_accelerator
                 and not args.help
             ) or (

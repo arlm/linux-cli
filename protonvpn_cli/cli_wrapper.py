@@ -572,11 +572,13 @@ class CLIWrapper:
             Netshield:\t\t{netshield}
             DNS:\t\t\t{dns}
             Alternative Routing:\t{alt_routing}
+            VPN Accelerator:\t{vpn_accel}
         """).format(
             protocol=user_settings_dict[DisplayUserSettingsEnum.PROTOCOL],
             alt_routing=user_settings_dict[DisplayUserSettingsEnum.ALT_ROUTING],
             killswitch=user_settings_dict[DisplayUserSettingsEnum.KILLSWITCH],
             netshield=user_settings_dict[DisplayUserSettingsEnum.NETSHIELD],
+            vpn_accel=user_settings_dict[DisplayUserSettingsEnum.VPN_ACCELERATOR],
             dns=user_settings_dict[DisplayUserSettingsEnum.DNS],
         )
         print(status_to_print)
@@ -597,6 +599,7 @@ class CLIWrapper:
         raw_custom_dns = raw_format[DisplayUserSettingsEnum.CUSTOM_DNS]
         raw_ns = raw_format[DisplayUserSettingsEnum.NETSHIELD]
         raw_alt_routing = raw_format[DisplayUserSettingsEnum.ALT_ROUTING]
+        raw_vpn_accel = raw_format[DisplayUserSettingsEnum.VPN_ACCELERATOR]
 
         # protocol
         if raw_protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]: # noqa
@@ -627,6 +630,7 @@ class CLIWrapper:
         transformed_ns = netshield_status[raw_ns]
 
         # vpn accelerator
+        transformed_vpn_accel = "Enabled" if raw_vpn_accel == UserSettingStatusEnum.ENABLED else "Disabled" # noqa
 
         # alternative_routing
         transformed_alt_routing = "Enabled" if raw_alt_routing == UserSettingStatusEnum.ENABLED else "Disabled" # noqa
@@ -637,6 +641,7 @@ class CLIWrapper:
             DisplayUserSettingsEnum.DNS: transformed_dns,
             DisplayUserSettingsEnum.NETSHIELD: transformed_ns,
             DisplayUserSettingsEnum.ALT_ROUTING: transformed_alt_routing,
+            DisplayUserSettingsEnum.VPN_ACCELERATOR: transformed_vpn_accel,
         }
 
     def restore_default_configurations(self, _):
