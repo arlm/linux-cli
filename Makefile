@@ -17,7 +17,7 @@ IMAGE_URL_FED31 = fedora:31
 IMAGE_URL_FED32 = fedora:32
 IMAGE_URL_FED33 = fedora:33
 IMAGE_URL_FED34 = fedora:34
-IMAGE_URL_ARCH = archlinux:base-devel-20210131.0.14634
+IMAGE_URL_ARCH = archlinux:latest
 
 # Run make base to build both images based on ubuntu and fedora
 base: image-deb image-fed31 image-fed32 image-fed33 image-fed34 image-arch
