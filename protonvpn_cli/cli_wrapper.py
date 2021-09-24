@@ -69,6 +69,13 @@ class CLIWrapper:
 
         try:
             self.protonvpn.login(username, password)
+        except exceptions.API9001Error as e:
+            logger.exception(e)
+            print(
+                "\nHuman Verification is required. "
+                "Please use the application to pass the human verification step."
+            )
+            return 1
         except exceptions.InsecureConnection as e:
             logger.exception(e)
             print(
@@ -255,6 +262,13 @@ class CLIWrapper:
                 "command into terminal:\nbusctl set-property org.freedesktop.NetworkManager "
                 "/org/freedesktop/NetworkManager org.freedesktop.NetworkManager "
                 "ConnectivityCheckEnabled 'b' 0"
+            )
+            return 1
+        except exceptions.API9001Error as e:
+            logger.exception(e)
+            print(
+                "\nHuman Verification is required. "
+                "Please use the application to pass the human verification step."
             )
             return 1
         except exceptions.InsecureConnection as e:
