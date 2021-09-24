@@ -1,5 +1,5 @@
 %define unmangled_name protonvpn-cli
-%define version 3.9.0
+%define version 3.10.0
 %define release 1
 
 Prefix: %{_prefix}
@@ -19,7 +19,7 @@ BuildRoot: %{_tmppath}/%{unmangled_name}-%{version}-%{release}-buildroot
 
 BuildRequires: python3-devel
 BuildRequires: python3-setuptools
-Requires: python3-protonvpn-nm-lib >= 3.4.0
+Requires: python3-protonvpn-nm-lib
 Requires: python3-dialog
 
 %{?python_disable_dependency_generator}
@@ -46,6 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Fri Sep 24 2021 Proton Technologies AG <opensource@proton.me> 3.10.0-1
+- Handle human verification
+
 * Mon Aug 09 2021 Proton Technologies AG <opensource@proton.me> 3.9.0-1
 - Feature: Add alternative routing option
 
