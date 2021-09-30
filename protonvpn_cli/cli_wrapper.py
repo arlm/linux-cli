@@ -549,7 +549,7 @@ class CLIWrapper:
 
         status = (
             UserSettingStatusEnum.ENABLED
-            if status == "on"
+            if status == "enable"
             else UserSettingStatusEnum.DISABLED
         )
 
