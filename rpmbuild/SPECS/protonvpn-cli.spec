@@ -46,6 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Fri Sep 24 2021 Proton Technologies AG <opensource@proton.me> 3.10.1-1
+- Improve: Exception handling
+
 * Fri Sep 24 2021 Proton Technologies AG <opensource@proton.me> 3.10.0-1
 - Handle human verification
 

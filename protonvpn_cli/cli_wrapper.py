@@ -67,6 +67,8 @@ class CLIWrapper:
         password = getpass.getpass("Enter your ProtonVPN password: ")
         logger.info("Credentials provided, attempting to login")
 
+        retry_or_contact_support = "Please retry or contact support."
+
         try:
             self.protonvpn.login(username, password)
         except exceptions.API9001Error as e:
@@ -83,9 +85,40 @@ class CLIWrapper:
                 "Try changing networks and/or enable alternative routing."
             )
             return 1
-        except (exceptions.ProtonVPNException, Exception) as e:
+        except exceptions.APITimeoutError as e:
+            logger.exception(e)
+            print("Connection to API timed out.  {}".format(retry_or_contact_support))
+            return 1
+        except exceptions.UnreacheableAPIError as e:
+            logger.exception(e)
+            print("Unable to reach API. {}".format(retry_or_contact_support))
+            return 1
+        except exceptions.APIError as e:
+            logger.exception(e)
+            print("Error in reaching API. {}".format(retry_or_contact_support))
+            return 1
+        except exceptions.NetworkConnectionError as e:
+            logger.exception(e)
+            print("Network Error. {}".format(retry_or_contact_support))
+            return 1
+        except exceptions.UnknownAPIError as e:
+            logger.exception(e)
+            print("Unknown API error. {}".format(retry_or_contact_support))
+            return 1
+        except (
+            exceptions.API8002Error, exceptions.API5002Error,
+            exceptions.API5003Error, exceptions.API85031Error,
+            exceptions.API12087Error
+        ) as e:
             logger.exception(e)
             print("\n{}".format(e))
+            return 1
+        except (exceptions.ProtonVPNException, Exception) as e:
+            logger.exception(e)
+            print(
+                "Unknown error occured. If the issue persists, "
+                "please contact support."
+            )
             return 1
 
         print("\nSuccessful login.")
@@ -263,6 +296,14 @@ class CLIWrapper:
                 "/org/freedesktop/NetworkManager org.freedesktop.NetworkManager "
                 "ConnectivityCheckEnabled 'b' 0"
             )
+            return 1
+        except (
+            exceptions.API8002Error, exceptions.API5002Error,
+            exceptions.API5003Error, exceptions.API85031Error,
+            exceptions.API12087Error
+        ) as e:
+            logger.exception(e)
+            print("\n{}".format(e))
             return 1
         except exceptions.API9001Error as e:
             logger.exception(e)
