@@ -16,7 +16,7 @@ from protonvpn_nm_lib.enums import (ConnectionMetadataEnum,
                                     NetshieldTranslationEnum, ProtocolEnum,
                                     ProtocolImplementationEnum, ServerTierEnum,
                                     UserSettingStatusEnum,
-                                    VPNConnectionStateEnum)
+                                    VPNConnectionStateEnum, SecureCoreStatusEnum)
 
 from .cli_dialog import ProtonVPNDialog
 from .logger import logger
@@ -87,23 +87,23 @@ class CLIWrapper:
             return 1
         except exceptions.APITimeoutError as e:
             logger.exception(e)
-            print("Connection to API timed out.  {}".format(retry_or_contact_support))
+            print("\nConnection to API timed out.  {}".format(retry_or_contact_support))
             return 1
         except exceptions.UnreacheableAPIError as e:
             logger.exception(e)
-            print("Unable to reach API. {}".format(retry_or_contact_support))
+            print("\nUnable to reach API. {}".format(retry_or_contact_support))
             return 1
         except exceptions.APIError as e:
             logger.exception(e)
-            print("Error in reaching API. {}".format(retry_or_contact_support))
+            print("\nError in reaching API. {}".format(retry_or_contact_support))
             return 1
         except exceptions.NetworkConnectionError as e:
             logger.exception(e)
-            print("Network Error. {}".format(retry_or_contact_support))
+            print("\nNetwork Error. {}".format(retry_or_contact_support))
             return 1
         except exceptions.UnknownAPIError as e:
             logger.exception(e)
-            print("Unknown API error. {}".format(retry_or_contact_support))
+            print("\nUnknown API error. {}".format(retry_or_contact_support))
             return 1
         except (
             exceptions.API8002Error, exceptions.API5002Error,
@@ -116,7 +116,7 @@ class CLIWrapper:
         except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print(
-                "Unknown error occured. If the issue persists, "
+                "\nUnknown error occured. If the issue persists, "
                 "please contact support."
             )
             return 1
@@ -181,7 +181,7 @@ class CLIWrapper:
 
         return 0
 
-    def connect(self, args):
+    def connect(self, args, only_free=False):
         """Proxymethod to connect to ProtonVPN."""
         if not self.protonvpn.check_session_exists():
             print("\nNo session was found. Please login first.")
@@ -219,7 +219,7 @@ class CLIWrapper:
 
         try:
             self.protonvpn.setup_connection(
-                connection_type=connect_type,
+                connection_type=connect_type if not only_free else ConnectionTypeEnum.FREE,
                 connection_type_extra_arg=connect_type_extra_arg,
                 protocol=protocol
             )
@@ -367,6 +367,15 @@ class CLIWrapper:
         return self._connect(True)
 
     def _connect(self, is_reconnecting=False):
+        def _disable_plus_features():
+            self.user_settings.netshield = NetshieldTranslationEnum.DISABLED
+            self.user_settings.secure_core = SecureCoreStatusEnum.OFF
+
+        def _reconnect_to_free_server():
+            from collections import namedtuple
+            Namespace = namedtuple("Namespace", ["fastest", "protocol"])
+            self.connect(Namespace(True, None), True)
+
         connection_metadata = self.protonvpn.get_connection_metadata()
         print(
             "{} to ProtonVPN on {} with {}.".format(
@@ -381,6 +390,15 @@ class CLIWrapper:
         )
         try:
             connect_response = self.protonvpn.connect()
+        except exceptions.AccountIsDelinquentError as e:
+            logger.exception(e)
+            print(
+                "\nThe account is flagged as delinquent due to unpaid invoices."
+                "\nYou can continue to use ProtonVPN, but any paid features are now disabled.\n"
+            )
+            _disable_plus_features()
+            _reconnect_to_free_server()
+            return
         except exceptions.ExceededAmountOfConcurrentSessionsError as e:
             logger.exception(e)
             print(
@@ -389,7 +407,7 @@ class CLIWrapper:
                 "\nto get up to 10 devices connected at the same time at https://account.protonvpn.com/dashboard"
             )
             return 1
-        except Exception as e:
+        except (exceptions.ProtonVPNException, Exception) as e:
             logger.exception(e)
             print("\n{}".format(e))
             return 1
