@@ -367,7 +367,7 @@ class CLIWrapper:
         return self._connect(True)
 
     def _connect(self, is_reconnecting=False):
-        def _disable_plus_features():
+        def _disable_non_free_features():
             self.user_settings.netshield = NetshieldTranslationEnum.DISABLED
             self.user_settings.secure_core = SecureCoreStatusEnum.OFF
 
@@ -396,7 +396,16 @@ class CLIWrapper:
                 "\nThe account is flagged as delinquent due to unpaid invoices."
                 "\nYou can continue to use ProtonVPN, but any paid features are now disabled.\n"
             )
-            _disable_plus_features()
+            _disable_non_free_features()
+            _reconnect_to_free_server()
+            return
+        except exceptions.AccountWasDowngradedError as e:
+            logger.exception(e)
+            print(
+                "\nYour subscription has been downgraded, "
+                "so we are reconnecting to the fastest available server.\n"
+            )
+            _disable_non_free_features()
             _reconnect_to_free_server()
             return
         except exceptions.ExceededAmountOfConcurrentSessionsError as e:
