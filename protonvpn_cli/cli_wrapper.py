@@ -381,6 +381,14 @@ class CLIWrapper:
         )
         try:
             connect_response = self.protonvpn.connect()
+        except exceptions.ExceededAmountOfConcurrentSessionsError as e:
+            logger.exception(e)
+            print(
+                "\nYou have reached your maximum device limit."
+                "\nPlease disconnect another device to connect this one or upgrade to PLUS"
+                "\nto get up to 10 devices connected at the same time at https://account.protonvpn.com/dashboard"
+            )
+            return 1
         except Exception as e:
             logger.exception(e)
             print("\n{}".format(e))
