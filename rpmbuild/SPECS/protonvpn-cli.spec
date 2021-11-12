@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.11.0
-%define release 2
+%define release 3
 
 Prefix: %{_prefix}
 
@@ -46,9 +46,10 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Thu Nov 12 2021 Proton Technologies AG <opensource@proton.me> 3.11.0-2
+* Thu Nov 12 2021 Proton Technologies AG <opensource@proton.me> 3.11.0-3
 - Improve: Handle max concurrent devices
 - Improve: Handle account delinquency
+- Improve: Handle plan downgrade
 
 * Fri Sep 24 2021 Proton Technologies AG <opensource@proton.me> 3.10.1-1
 - Improve: Exception handling
