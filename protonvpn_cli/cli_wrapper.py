@@ -374,7 +374,7 @@ class CLIWrapper:
         def _reconnect_to_free_server():
             from collections import namedtuple
             Namespace = namedtuple("Namespace", ["fastest", "protocol"])
-            self.connect(Namespace(True, None), True)
+            return self.connect(Namespace(True, None), True)
 
         connection_metadata = self.protonvpn.get_connection_metadata()
         print(
@@ -397,8 +397,7 @@ class CLIWrapper:
                 "\nYou can continue to use ProtonVPN, but any paid features are now disabled.\n"
             )
             _disable_non_free_features()
-            _reconnect_to_free_server()
-            return
+            return _reconnect_to_free_server()
         except exceptions.AccountWasDowngradedError as e:
             logger.exception(e)
             print(
@@ -406,12 +405,14 @@ class CLIWrapper:
                 "so we are reconnecting to the fastest available server.\n"
             )
             _disable_non_free_features()
-            _reconnect_to_free_server()
-            return
+            return _reconnect_to_free_server()
         except exceptions.VPNUsernameOrPasswordHasBeenChangedError as e:
             logger.exception(e)
-            self.connect(args, only_free)
-            return
+            return self.connect(args, only_free)
+        except exceptions.AccountPasswordHasBeenCompromisedError as e:
+            logger.exception(e)
+            print("\n{}".format(str(e)))
+            return 1
         except exceptions.ExceededAmountOfConcurrentSessionsError as e:
             logger.exception(e)
             print(
