@@ -1,8 +1,9 @@
-protonvpn-cli (3.11.0-3) unstable; urgency=medium
+protonvpn-cli (3.11.0-4) unstable; urgency=medium
 
   * Improve: Handle max concurrent devices
   * Improve: Handle account delinquency
   * Improve: Handle plan downgrade
+  * Improve: Handle username/password Update
   
  -- Proton Technologies AG <opensource@proton.me>  Fri, 12 Nov 2021 09:00:00 +0000
 

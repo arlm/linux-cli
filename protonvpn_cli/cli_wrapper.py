@@ -328,7 +328,7 @@ class CLIWrapper:
             )
             return 1
 
-        return self._connect()
+        return self._connect(args, only_free)
 
     def disconnect(self):
         """Proxymethod to disconnect from ProtonVPN."""
@@ -364,9 +364,9 @@ class CLIWrapper:
             )
             return 1
 
-        return self._connect(True)
+        return self._connect(is_reconnecting=True)
 
-    def _connect(self, is_reconnecting=False):
+    def _connect(self, args=None, only_free=None, is_reconnecting=False):
         def _disable_non_free_features():
             self.user_settings.netshield = NetshieldTranslationEnum.DISABLED
             self.user_settings.secure_core = SecureCoreStatusEnum.OFF
@@ -407,6 +407,10 @@ class CLIWrapper:
             )
             _disable_non_free_features()
             _reconnect_to_free_server()
+            return
+        except exceptions.VPNUsernameOrPasswordHasBeenChangedError as e:
+            logger.exception(e)
+            self.connect(args, only_free)
             return
         except exceptions.ExceededAmountOfConcurrentSessionsError as e:
             logger.exception(e)
