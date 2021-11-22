@@ -371,10 +371,10 @@ class CLIWrapper:
             self.user_settings.netshield = NetshieldTranslationEnum.DISABLED
             self.user_settings.secure_core = SecureCoreStatusEnum.OFF
 
-        def _reconnect_to_free_server():
+        def _reconnect_to_fastest_server():
             from collections import namedtuple
             Namespace = namedtuple("Namespace", ["fastest", "protocol"])
-            return self.connect(Namespace(True, None), True)
+            return self.connect(Namespace(True, None), False)
 
         connection_metadata = self.protonvpn.get_connection_metadata()
         print(
@@ -397,7 +397,7 @@ class CLIWrapper:
                 "\nYou can continue to use ProtonVPN, but any paid features are now disabled.\n"
             )
             _disable_non_free_features()
-            return _reconnect_to_free_server()
+            return _reconnect_to_fastest_server()
         except exceptions.AccountWasDowngradedError as e:
             logger.exception(e)
             print(
@@ -405,7 +405,7 @@ class CLIWrapper:
                 "so we are reconnecting to the fastest available server.\n"
             )
             _disable_non_free_features()
-            return _reconnect_to_free_server()
+            return _reconnect_to_fastest_server()
         except exceptions.VPNUsernameOrPasswordHasBeenChangedError as e:
             logger.exception(e)
             return self.connect(args, only_free)
