@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
-%define version 3.11.0
-%define release 7
+%define version 3.11.1
+%define release 1
 
 Prefix: %{_prefix}
 
@@ -46,6 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Thu Dez 16 2021 Proton Technologies AG <opensource@proton.me> 3.11.1-1
+- Bug: Display message when incorrectly formatted servername is provided
+
 * Thu Nov 12 2021 Proton Technologies AG <opensource@proton.me> 3.11.0-7
 - Improve: Handle accounting use cases
 
