@@ -196,7 +196,7 @@ class CLIWrapper:
                     connect_type_extra_arg = cls_attr[0]
                     break
 
-                connect_type_extra_arg = cls_attr[1]
+                connect_type_extra_arg = cls_attr[1].replace(" ", "")
 
         protocol = args.protocol
 
@@ -279,7 +279,7 @@ class CLIWrapper:
             )
             print(killswitch_msg)
             return 1
-        except exceptions.IllegalServername as e:
+        except exceptions.UnexpectedServername as e:
             logger.exception(e)
             print(
                 "\nProvided servername is invalid. Please ensure that you've "
