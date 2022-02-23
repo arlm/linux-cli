@@ -337,6 +337,15 @@ class ProtonVPNCLI:
             ]
         )
         group.add_argument(
+            "--moderate-nat",
+            help="Moderate NAT.",
+            nargs=1,
+            choices=[
+                "enable",
+                "disable",
+            ]
+        )
+        group.add_argument(
             "-d", "--default",
             help="Reset do default configurations.",
             action="store_true"
@@ -361,24 +370,19 @@ class ProtonVPNCLI:
                 and not args.list
                 and not args.vpn_accelerator
                 and not args.alt_routing
+                and not args.moderate_nat
             )
         ):
             print(CONFIG_HELP)
             return 0
         elif (
-            (
-                not args.protocol
-                and not args.default
-                and not args.alt_routing
-                and not args.vpn_accelerator
-                and not args.help
-            ) or (
-                not args.protocol
-                and not args.vpn_accelerator
-                and not args.alt_routing
-                and not args.default
-                and args.help
-            )
+            not args.protocol
+            and not args.default
+            and not args.alt_routing
+            and not args.vpn_accelerator
+            and not args.moderate_nat
+            and not args.help
+
         ) and args.dns and args.dns.pop() == "custom":
             return custom_dns()
 

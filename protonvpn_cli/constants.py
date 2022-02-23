@@ -96,6 +96,8 @@ optional arguments:
     -p, --protocol      Change default protocol.
     -d, --default       Reset to default configurations.
     --alt-routing       Change alternative routing preference.
+    --moderate-nat      Change Moderate NAT preference.
+                        If disabled then strict NAT is applied.
     --vpn-accelerator   VPN Accelerator enables a set of unique performance
                         enhancing technologies which can increase VPN speeds by up to 400%.
     -h, --help          Display help message.
@@ -108,6 +110,7 @@ examples:
     protonvpn-cli config --protocol udp
     protonvpn-cli config --vpn-accelerator enable
     protonvpn-cli config --alt-routing enable
+    protonvpn-cli config --moderate-nat disable
     protonvpn-cli config (-d | --default)
     protonvpn-cli config --help
 """ # noqa
