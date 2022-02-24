@@ -1,7 +1,7 @@
-protonvpn-cli (3.11.1-2) unstable; urgency=medium
+protonvpn-cli (3.11.1-3) unstable; urgency=medium
 
   * Bugfix: Display message when incorrectly formatted servername is provided
-  * Feature: Modereate NAT
+  * Feature: Moderate NAT, Non Standard Ports
   
  -- Proton Technologies AG <opensource@proton.me>  Thu, 16 Dez 2021 09:00:00 +0000
  

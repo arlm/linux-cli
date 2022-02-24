@@ -346,6 +346,15 @@ class ProtonVPNCLI:
             ]
         )
         group.add_argument(
+            "--non-standard-ports",
+            help="Non Standard Ports.",
+            nargs=1,
+            choices=[
+                "enable",
+                "disable",
+            ]
+        )
+        group.add_argument(
             "-d", "--default",
             help="Reset do default configurations.",
             action="store_true"
@@ -371,6 +380,7 @@ class ProtonVPNCLI:
                 and not args.vpn_accelerator
                 and not args.alt_routing
                 and not args.moderate_nat
+                and not args.non_standard_ports
             )
         ):
             print(CONFIG_HELP)
@@ -381,6 +391,7 @@ class ProtonVPNCLI:
             and not args.alt_routing
             and not args.vpn_accelerator
             and not args.moderate_nat
+            and not args.non_standard_ports
             and not args.help
 
         ) and args.dns and args.dns.pop() == "custom":
