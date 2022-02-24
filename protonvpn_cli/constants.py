@@ -98,6 +98,8 @@ optional arguments:
     --alt-routing       Change alternative routing preference.
     --moderate-nat      Change Moderate NAT preference.
                         If disabled then strict NAT is applied.
+    --non-standard-ports Change Non Standard Ports preference.
+                        If disabled then a limited ammount of ports will be used for improved security.
     --vpn-accelerator   VPN Accelerator enables a set of unique performance
                         enhancing technologies which can increase VPN speeds by up to 400%.
     -h, --help          Display help message.
