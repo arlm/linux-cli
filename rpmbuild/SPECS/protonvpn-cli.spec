@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.11.1
-%define release 1
+%define release 2
 
 Prefix: %{_prefix}
 
@@ -46,8 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Thu Dez 16 2021 Proton Technologies AG <opensource@proton.me> 3.11.1-1
-- Bug: Display message when incorrectly formatted servername is provided
+* Thu Dez 16 2021 Proton Technologies AG <opensource@proton.me> 3.11.1-2
+- Bugfix: Display message when incorrectly formatted servername is provided
+- Feature: Modereate NAT
 
 * Thu Nov 12 2021 Proton Technologies AG <opensource@proton.me> 3.11.0-7
 - Improve: Handle accounting use cases

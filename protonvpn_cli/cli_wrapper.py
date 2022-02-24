@@ -147,6 +147,26 @@ class CLIWrapper:
         print("\nAlternative Routing has been {}d. ".format(status))
         return 0
 
+    def set_moderate_nat(self, status):
+        _status = {
+            "enable": UserSettingStatusEnum.ENABLED,
+            "disable": UserSettingStatusEnum.DISABLED
+        }
+
+        try:
+            self.user_settings.moderate_nat = _status[status]
+        except KeyError as e:
+            logger.exception(e)
+            print("\nInvalid option was provided")
+            return 1
+        except Exception as e:
+            logger.exception(e)
+            print(e)
+            return 1
+
+        print("\nModerate NAT has been {}d. ".format(status))
+        return 0
+
     def logout(self):
         """Proxymethod to logout user."""
         if not self.protonvpn.check_session_exists():
@@ -481,10 +501,9 @@ class CLIWrapper:
             print("\nPlease login to to be able to set NetShield.")
             return 1
 
-        # To-do: Once infra is updated, implement this check
-        # if not self.protonvpn.get_session().clientconfig.features.netshield:
-        #     print("\nThis feature is currently not supported.")
-        #     return
+        if not self.protonvpn.get_session().clientconfig.features.netshield:
+            print("\nThis feature is currently not supported.")
+            return
 
         session = self.protonvpn.get_session()
         if not args.off and session.vpn_tier == ServerTierEnum.FREE.value:
@@ -540,6 +559,7 @@ class CLIWrapper:
             list=self.list_configurations,
             vpn_accelerator=self.set_vpn_accelerator,
             alt_routing=self.set_alternative_routing,
+            moderate_nat=self.set_moderate_nat,
             default=self.restore_default_configurations,
         )
 
