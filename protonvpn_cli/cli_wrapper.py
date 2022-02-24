@@ -159,12 +159,40 @@ class CLIWrapper:
             logger.exception(e)
             print("\nInvalid option was provided")
             return 1
+        except exceptions.APISessionIsNotValidError as e:
+            logger.exception(e)
+            print("\nPlease login to make any changes")
+            return 1
         except Exception as e:
             logger.exception(e)
             print(e)
             return 1
 
         print("\nModerate NAT has been {}d. ".format(status))
+        return 0
+
+    def set_non_standard_ports(self, status):
+        _status = {
+            "enable": UserSettingStatusEnum.ENABLED,
+            "disable": UserSettingStatusEnum.DISABLED
+        }
+
+        try:
+            self.user_settings.non_standard_ports = _status[status]
+        except KeyError as e:
+            logger.exception(e)
+            print("\nInvalid option was provided")
+            return 1
+        except exceptions.APISessionIsNotValidError as e:
+            logger.exception(e)
+            print("\nPlease login to make any changes")
+            return 1
+        except Exception as e:
+            logger.exception(e)
+            print(e)
+            return 1
+
+        print("\nNon Standard Ports have been {}d. ".format(status))
         return 0
 
     def logout(self):
@@ -560,6 +588,7 @@ class CLIWrapper:
             vpn_accelerator=self.set_vpn_accelerator,
             alt_routing=self.set_alternative_routing,
             moderate_nat=self.set_moderate_nat,
+            non_standard_ports=self.set_non_standard_ports,
             default=self.restore_default_configurations,
         )
 
@@ -688,6 +717,8 @@ class CLIWrapper:
             DNS:\t\t\t{dns}
             Alternative Routing:\t{alt_routing}
             VPN Accelerator:\t{vpn_accel}
+            Moderate NAT:\t\t{mod_nat}
+            Non Standard Ports:\t{non_stand_ports}
         """).format(
             protocol=user_settings_dict[DisplayUserSettingsEnum.PROTOCOL],
             alt_routing=user_settings_dict[DisplayUserSettingsEnum.ALT_ROUTING],
@@ -695,6 +726,8 @@ class CLIWrapper:
             netshield=user_settings_dict[DisplayUserSettingsEnum.NETSHIELD],
             vpn_accel=user_settings_dict[DisplayUserSettingsEnum.VPN_ACCELERATOR],
             dns=user_settings_dict[DisplayUserSettingsEnum.DNS],
+            mod_nat=user_settings_dict[DisplayUserSettingsEnum.MODERATE_NAT],
+            non_stand_ports=user_settings_dict[DisplayUserSettingsEnum.NON_STANDARD_PORTS],
         )
         print(status_to_print)
         return 0
@@ -715,6 +748,9 @@ class CLIWrapper:
         raw_ns = raw_format[DisplayUserSettingsEnum.NETSHIELD]
         raw_alt_routing = raw_format[DisplayUserSettingsEnum.ALT_ROUTING]
         raw_vpn_accel = raw_format[DisplayUserSettingsEnum.VPN_ACCELERATOR]
+        moderate_nat = "On" if bool(raw_format[DisplayUserSettingsEnum.MODERATE_NAT].value) else "Off"
+        non_standard_ports = "On" if bool(raw_format[DisplayUserSettingsEnum.NON_STANDARD_PORTS].value) else "Off"
+
 
         # protocol
         if raw_protocol in SUPPORTED_PROTOCOLS[ProtocolImplementationEnum.OPENVPN]: # noqa
@@ -757,6 +793,8 @@ class CLIWrapper:
             DisplayUserSettingsEnum.NETSHIELD: transformed_ns,
             DisplayUserSettingsEnum.ALT_ROUTING: transformed_alt_routing,
             DisplayUserSettingsEnum.VPN_ACCELERATOR: transformed_vpn_accel,
+            DisplayUserSettingsEnum.MODERATE_NAT: moderate_nat,
+            DisplayUserSettingsEnum.NON_STANDARD_PORTS: non_standard_ports,
         }
 
     def restore_default_configurations(self, _):
