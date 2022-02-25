@@ -168,7 +168,11 @@ class CLIWrapper:
             print(e)
             return 1
 
-        print("\nModerate NAT has been {}d. ".format(status))
+        print(
+            "\nModerate NAT has been {}d. "
+            "\nIf connected to VPN, please reconnect for "
+            "changes to take effect.".format(status)
+        )
         return 0
 
     def set_non_standard_ports(self, status):
@@ -192,7 +196,11 @@ class CLIWrapper:
             print(e)
             return 1
 
-        print("\nNon Standard Ports have been {}d. ".format(status))
+        print(
+            "\nNon Standard Ports have been {}d. "
+            "\nIf connected to VPN, please reconnect for "
+            "changes to take effect.".format(status)
+        )
         return 0
 
     def logout(self):
