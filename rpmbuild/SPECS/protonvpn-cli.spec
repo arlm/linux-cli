@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.11.1
-%define release 3
+%define release 4
 
 Prefix: %{_prefix}
 
@@ -46,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
-* Thu Dez 16 2021 Proton Technologies AG <opensource@proton.me> 3.11.1-3
+* Thu Dez 16 2021 Proton Technologies AG <opensource@proton.me> 3.11.1-4
 - Bugfix: Display message when incorrectly formatted servername is provided
 - Feature: Moderate NAT, Non Standard Ports
 
