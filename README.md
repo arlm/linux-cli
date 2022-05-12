@@ -14,7 +14,7 @@ You can download the latest stable release, either from our official repositorie
 ### Dependencies:
 | **Distro**                              | **Command**                                                                                                     |
 |:----------------------------------------|:----------------------------------------------------------------------------------------------------------------|
-|Fedora/CentOS/RHEL                       | `python3-dialog` |
+|Fedora/RHEL                              | `python3-dialog` |
 |Ubuntu/Linux Mint/Debian and derivatives | `python3-dialog` |
 |Arch Linux/Manjaro                       | `python-pythondialog` |
 
