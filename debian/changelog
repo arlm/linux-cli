@@ -1,3 +1,9 @@
+protonvpn-cli (3.13.0-1) unstable; urgency=medium
+
+  * Fix: If session is invalid, inform the user about it.
+
+ -- Proton Technologies AG <opensource@proton.me>  Thu, 01 Sep 2022 17:00:00 +0000
+
 protonvpn-cli (3.12.0-1) unstable; urgency=medium
 
   * Introducing Proton's refreshed look. As we continue to make privacy accessible to everyone, we've updated our apps to provide you with an even better experience with our services. Proton - Privacy by default

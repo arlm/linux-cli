@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
-%define version 3.12.0
-%define release 4
+%define version 3.13.0
+%define release 1
 
 Prefix: %{_prefix}
 
@@ -46,6 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Thu Sep 01 2022 Proton Technologies AG <opensource@proton.me> 3.13.0-1
+- Fix: If session is invalid, inform the user about it.
+
 * Thu May 19 2022 Proton Technologies AG <opensource@proton.me> 3.12.0-1
 - Introducing Proton's refreshed look. As we continue to make privacy accessible to everyone, we've updated our apps to provide you with an even better experience with our services. Proton - Privacy by default
 

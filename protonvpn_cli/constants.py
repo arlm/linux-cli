@@ -1,4 +1,4 @@
-APP_VERSION = "3.12.0"
+APP_VERSION = "3.13.0"
 LOGGER_NAME = "protonvpn-cli"
 
 MAIN_CLI_HELP = """
