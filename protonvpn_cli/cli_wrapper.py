@@ -368,6 +368,10 @@ class CLIWrapper:
                 "Please use the application to pass the human verification step."
             )
             return 1
+        except exceptions.APISessionIsNotValidError as e:
+            logger.exception("Invalid session, re-authentication required: {}.".format(e))
+            print("\n{}".format("Your session is invalid. Please login to re-authenticate."))
+            return 1
         except exceptions.InsecureConnection as e:
             logger.exception(e)
             print(
