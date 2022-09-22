@@ -1,6 +1,6 @@
 %define unmangled_name protonvpn-cli
 %define version 3.13.0
-%define release 1
+%define release 2
 
 Prefix: %{_prefix}
 
@@ -46,6 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Thu Sep 22 2022 Proton Technologies AG <opensource@proton.me> 3.13.0-2
+- Drop F34-35 and add F37
+
 * Thu Sep 01 2022 Proton Technologies AG <opensource@proton.me> 3.13.0-1
 - Fix: If session is invalid, inform the user about it.
 
