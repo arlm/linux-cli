@@ -1,0 +1,62 @@
+FROM IMAGE_URL_ARCH
+ARG git_repo_lib
+ENV git_repo_lib=${git_repo_lib:-GIT_REPO_LIB}
+ARG git_repo_client
+ENV git_repo_client=${git_repo_client:-GIT_REPO_CLIENT}
+ARG git_branch
+ENV git_branch=${git_branch:-GIT_BRANCH}
+
+ARG pkgname
+ENV pkgname=${pkgname:-linux-cli}
+RUN mkdir tmp \
+    && podman run --rm -it -v "$(pwd)/tmp:/home/packager" alpine:3.15 sh \
+    && apk add  \
+    sudo  \
+    build-base  \
+    alpine-sdk \
+    git \
+    networkmanager \
+    networkmanager-openvpn \
+    openvpn \
+    make \
+    bash \
+    vim \
+    nano \
+    dbus \
+    libnm \
+    gnome-keyring \
+    libsecret \
+    python3 \
+    py3-pip \
+    py3-xdg \
+    py3-keyring \
+    py3-distro \
+    py3-jinja2 \
+    py3-gobject3 \
+    py3-pytest \
+    py3-pytest-cov \
+    py3-requests \
+    py3-openssl \
+    py3-bcrypt \
+    py3-gnupg \
+    && adduser -D packager \
+    && addgroup packager abuild \
+    && echo 'packager ALL=(ALL) NOPASSWD:ALL' >/etc/sudoers.d/packager \
+    && python3 -m pip install --upgrade sentry-sdk==0.10.2 \
+    && git clone --single-branch --branch $git_branch $git_repo_client \
+    && cd proton-python-client && pip3 install -e . \
+    && rm -rf .git \
+    && cd .. \
+    && git clone --single-branch --branch $git_branch $git_repo_lib \
+    && cd protonvpn-nm-lib && pip3 install -e . \
+    && rm -rf .git && cd ..
+
+COPY docker_entry_alpine.sh /usr/local/bin
+COPY . /home/user/$pkgname
+
+RUN chown -R user:user /home/user/
+WORKDIR /home/user/$pkgname
+
+USER packager
+
+ENTRYPOINT ["/usr/local/bin/docker_entry_docker_entry_alpine.sh"]
