@@ -1,16 +1,15 @@
-FROM IMAGE_URL_ARCH
+FROM IMAGE_URL_ALPINE AS builder
+
 ARG git_repo_lib
 ENV git_repo_lib=${git_repo_lib:-GIT_REPO_LIB}
 ARG git_repo_client
 ENV git_repo_client=${git_repo_client:-GIT_REPO_CLIENT}
 ARG git_branch
 ENV git_branch=${git_branch:-GIT_BRANCH}
-
 ARG pkgname
 ENV pkgname=${pkgname:-linux-cli}
-RUN mkdir tmp \
-    && podman run --rm -it -v "$(pwd)/tmp:/home/packager" alpine:3.15 sh \
-    && apk add  \
+
+RUN apk --update add \
     sudo  \
     build-base  \
     alpine-sdk \
@@ -19,15 +18,17 @@ RUN mkdir tmp \
     networkmanager-openvpn \
     openvpn \
     make \
+    python3 \
+    py3-pip \
     bash \
     vim \
     nano \
     dbus \
+    dbus-openrc \
     libnm \
     gnome-keyring \
     libsecret \
-    python3 \
-    py3-pip \
+    gnupg \
     py3-xdg \
     py3-keyring \
     py3-distro \
@@ -38,18 +39,31 @@ RUN mkdir tmp \
     py3-requests \
     py3-openssl \
     py3-bcrypt \
-    py3-gnupg \
+    py3-setuptools
+
+RUN mkdir -p tmp \
+    && adduser -Ds /bin/bash user \
+    && addgroup user wheel \
+    && echo '%wheel ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/user \
     && adduser -D packager \
     && addgroup packager abuild \
     && echo 'packager ALL=(ALL) NOPASSWD:ALL' >/etc/sudoers.d/packager \
     && python3 -m pip install --upgrade sentry-sdk==0.10.2 \
-    && git clone --single-branch --branch $git_branch $git_repo_client \
-    && cd proton-python-client && pip3 install -e . \
-    && rm -rf .git \
-    && cd .. \
-    && git clone --single-branch --branch $git_branch $git_repo_lib \
-    && cd protonvpn-nm-lib && pip3 install -e . \
-    && rm -rf .git && cd ..
+    && python3 -m pip install python-gnupg 
+
+FROM builder AS source
+
+RUN git clone --single-branch --branch $git_branch $git_repo_client \
+    && rm -rf .git 
+
+RUN git clone --single-branch --branch $git_branch $git_repo_lib \
+    && rm -rf .git
+
+FROM source
+
+RUN cd proton-python-client && pip3 install -e .
+
+RUN cd protonvpn-nm-lib && pip3 install -e . 
 
 COPY docker_entry_alpine.sh /usr/local/bin
 COPY . /home/user/$pkgname
@@ -57,6 +71,6 @@ COPY . /home/user/$pkgname
 RUN chown -R user:user /home/user/
 WORKDIR /home/user/$pkgname
 
-USER packager
+USER user
 
-ENTRYPOINT ["/usr/local/bin/docker_entry_docker_entry_alpine.sh"]
+ENTRYPOINT ["/usr/local/bin/docker_entry_alpine.sh"]

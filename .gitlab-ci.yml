@@ -81,7 +81,7 @@ make-image-fed37:
 
 make-image-alpine:
  stage: image
- extends: make-image-alpine
+ extends: make-image-deb
  script:
    - make image-alpine branch=$CI_COMMIT_REF_SLUG src=alpine   
 
